@@ -15,9 +15,15 @@ error() {
 }
 
 usage() {
+    echo
     echo "Usage:"
     echo
-    echo "$1 create <architecture> <path to rootfs archive> <user>"
+    echo "$1 create <user> <URL | path to rootfs archive> [<architecture>]"
+    echo "$1 remove <user>"
+    echo
+    echo "Webshell:"
+    echo "$1 enable webshell [port 1..65534]"
+    echo "$1 disable webshell"
     echo
     exit 0
 }
@@ -26,15 +32,15 @@ if test "$1" = "help"; then
     usage $0
 fi
 
-check_packages() {
+check_and_install_packages() {
     local packages=""
     local p
 
-    for p in shellinabox qemu-user-static distcc; do
+    for p in $@; do
 	if ! $(dpkg -l | grep -q $p); then
 	    packages="$packages $p"
-	else
-	    echo "$p installed!"
+	#else
+	#    echo "$p installed!"
 	fi
     done
 
@@ -54,6 +60,26 @@ check_valid_architecture() {
 	fi
     done
     echo "$ret"
+}
+
+detect_rootfs_architecture() {
+    local arch=""
+    local filearch=$(file $1 | cut -f2 -d',' | sed 's/^ //')
+    if test "$filearch" = "ARM"; then
+	arch=armv7
+    elif test "$filearch" = "ARM aarch64"; then
+	arch="aarch64"
+    elif test "$filearch" = "Intel 80386"; then
+	arch="i386"
+    elif test "$filearch" = "x86-64"; then
+	arch="x86_64"
+    elif test "$filearch" = "PowerPC or cisco 4500"; then
+	arch="powerpc"
+    elif test "$filearch" = "MIPS"; then
+	arch="mipsel"
+    fi
+
+    echo $arch
 }
 
 unpack_rootfs() {
@@ -81,36 +107,45 @@ unpack_rootfs() {
 
 if test "$1" = "create"; then
 
-    ARCH=$2
+    ARCH=$4
     ROOTFSFILE="$3"
-    USERNAME="${4}"
-    GROUPNAME="${4}users"
+    USERNAME="$2"
+    GROUPNAME="${2}users"
     ROOTFSDIR="/rootfs/${USERNAME}"
 
-    if test $(check_valid_architecture "$ARCH") = "0"; then
-	echo "Invalid architecture $ARCH!"
-	echo "Supported architectures: $SUPPORTED_ARCHITECTURES"
-	exit 1
+    if test ! "$ARCH" = ""; then
+	if test $(check_valid_architecture "$ARCH") = "0"; then
+	    echo "Invalid architecture $ARCH!"
+	    echo "Supported architectures: $SUPPORTED_ARCHITECTURES"
+	    exit 1
+	fi
     fi
 
     if test "$USERNAME" = ""; then
-	echo "Username can not be empty!"
-	exit 1
+	error "Username can not be empty!"
     fi
 
-    check_packages
+    if id "$USERNAME" &>/dev/null; then
+	error "User account already exists!"
+    fi
+
+    check_and_install_packages qemu-user-static
 
     echo
     echo "Creating new virtual chroot"
     echo
-    echo "Architecture    : $ARCH"
+    if test ! "$ARCH" = ""; then
+	echo "Architecture    : $ARCH"
+    else
+	echo "Architecture    : Autodetect"
+    fi
     echo "Rootfs          : $ROOTFSFILE"
     echo "Chroot directory: $ROOTFSDIR"
     echo "User            : $USERNAME"
     echo
     echo
 
-    echo "Preparing rootfs"
+    echo "Installing rootfs"
 
     mkdir -p "$ROOTFSDIR"
 
@@ -125,6 +160,15 @@ if test "$1" = "create"; then
 	unpack_rootfs $ROOTFSDIR $ROOTFSFILE
 	;;
     esac
+
+    if test "$ARCH" = ""; then
+	ARCH=$(detect_rootfs_architecture ${ROOTFSDIR}/bin/bash)
+	if test "$ARCH" = ""; then
+	    error "Cannot detect architecture for rootfs!"
+	else
+	    echo "Detected architecture $ARCH"
+	fi
+    fi
 
     groupadd $GROUPNAME
     useradd  -g $GROUPNAME -s /bin/bash $USERNAME
@@ -202,9 +246,48 @@ elif test "$1" = "remove"; then
 
     echo "Now, you can remove rootfs directory $ROOTFSDIR"
 
+elif test "$1" = "enable"; then
+
+    if test "$2" = "webshell"; then
+	if test "$3" = "port"; then
+	    PORT="$4"
+	    REGXPR='^[0-9]+$'
+	    if [[ $PORT =~ $REGXPR ]]; then
+		if test "$PORT" -lt 1 || test "$PORT" -ge 65535; then
+		    error "Webshell port must be in 1..65534!"
+		fi
+	    else
+		error "Webshell port is not a number!"
+	    fi
+	fi
+	check_and_install_packages shellinabox
+
+	. /etc/default/shellinabox
+
+	if test "$PORT" = ""; then
+	    PORT=$SHELLINABOX_PORT
+	fi
+
+	if test ! "$SHELLINABOX_PORT" = "$PORT"; then
+	    sed -i -e "s|SHELLINABOX_PORT=.*|SHELLINABOX_PORT=$PORT|" /etc/default/shellinabox
+	fi
+
+	if echo "$SHELLINABOX_ARGS" | grep -q -v '\--service /:SSH'; then
+	    sed -i -e "s|SHELLINABOX_ARGS=.*|SHELLINABOX_ARGS=\"$SHELLINABOX_ARGS --service /:SSH\"|" /etc/default/shellinabox
+	fi
+
+	service shellinabox restart
+    fi
+
+elif test "$1" = "disable"; then
+
+    if test "$2" = "webshell"; then
+	apt-get -y purge shellinabox
+    fi
+
 else
 
-    usage
+    usage $0
 
 fi
 
