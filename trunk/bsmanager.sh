@@ -129,7 +129,7 @@ if test "$1" = "create"; then
 	error "User account already exists!"
     fi
 
-    check_and_install_packages qemu-user-static
+    check_and_install_packages qemu-user-static binfmt-support
 
     echo
     echo "Creating new virtual chroot"
