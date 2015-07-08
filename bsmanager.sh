@@ -103,11 +103,13 @@ unpack_rootfs() {
 		pushd . &>/dev/null
 		cd $TMPMOUNT
 		cp -ax . ${rootfsdir}/
+		chown root:root $rootfsdir
 		popd &>/dev/null
+		umount $TMPMOUNT
 		break
 	    fi
 	    sleep 2
-	    umount $TMPMOUNT 2>/dev/null || umount $TMPMOUNT
+	    umount $TMPMOUNT
 	done
 
 	rmdir $TMPMOUNT
