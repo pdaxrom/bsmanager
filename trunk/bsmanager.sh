@@ -86,22 +86,50 @@ unpack_rootfs() {
     local rootfsdir=$1
     local rootfsfile=$2
 
-    tar xf "$rootfsfile" -C $ROOTFSDIR || error "Unpacking rootfs!"
+    if file -z $rootfsfile | grep -q partition; then
+	#case $rootfsfile in
+	
+	#esac
 
-    if test ! -d ${rootfsdir}/bin; then
+	TMPMOUNT="/tmp/mnt$$"
+	mkdir -p $TMPMOUNT
 
-	local unpacked_rootfsdir=$(echo $(ls $rootfsdir) | cut -f1 -d' ')
+	for p in `parted $rootfsfile unit B print | awk '/^ [0-9]/{ print substr($2, 1, length($2)-1); }'`; do
 
-	if test -d ${rootfsdir}/${unpacked_rootfsdir}/bin; then
+	    echo "Partition offset $p"
+	    mount -o loop,ro,offset=$p "$rootfsfile" $TMPMOUNT
+	    if test -d ${TMPMOUNT}/bin; then
+		echo "Found system partition at $p"
+		pushd . &>/dev/null
+		cd $TMPMOUNT
+		cp -ax . ${rootfsdir}/
+		popd &>/dev/null
+		break
+	    fi
+	    sleep 2
+	    umount $TMPMOUNT 2>/dev/null || umount $TMPMOUNT
+	done
 
-	    echo "Move unpacked files to rootfs directory!"
+	rmdir $TMPMOUNT
 
-	    mv ${rootfsdir}/${unpacked_rootfsdir} ${rootfsdir}/${unpacked_rootfsdir}orig
-	    mv ${rootfsdir}/${unpacked_rootfsdir}orig/* ${rootfsdir}/
-	    rmdir ${rootfsdir}/${unpacked_rootfsdir}orig
+    else
+	tar xf "$rootfsfile" -C $rootfsdir || error "Unpacking rootfs!"
+
+	if test ! -d ${rootfsdir}/bin; then
+
+	    local unpacked_rootfsdir=$(echo $(ls $rootfsdir) | cut -f1 -d' ')
+
+	    if test -d ${rootfsdir}/${unpacked_rootfsdir}/bin; then
+
+		echo "Move unpacked files to rootfs directory!"
+
+		mv ${rootfsdir}/${unpacked_rootfsdir} ${rootfsdir}/${unpacked_rootfsdir}orig
+		mv ${rootfsdir}/${unpacked_rootfsdir}orig/* ${rootfsdir}/
+		rmdir ${rootfsdir}/${unpacked_rootfsdir}orig
+
+	    fi
 
 	fi
-
     fi
 }
 
