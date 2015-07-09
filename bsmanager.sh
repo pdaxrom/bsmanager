@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#
+# Virtual machine shell access management
+#
+# (c) sashz, 2015
+#
+
 SUPPORTED_ARCHITECTURES="armv5 armv6 armv7 \
 aarch64 \
 i386 i486 i586 i686 x86_64 amd64 \
@@ -24,6 +30,12 @@ usage() {
     echo "Webshell:"
     echo "$1 enable webshell [port 1..65534]"
     echo "$1 disable webshell"
+    echo
+    echo "Admin shell:"
+    echo "$1 shell <user>"
+    echo
+    echo "List all available accounts"
+    echo "$1 list"
     echo
     exit 0
 }
@@ -264,6 +276,14 @@ if test "$1" = "create"; then
 	mount ${ROOTFSDIR}${dir}
     done
 
+    ##
+    case $ARCH in
+    armv6*)
+	echo "export QEMU_CPU=arm1176" >> ${ROOTFSDIR}/home/${USERNAME}/.bashrc
+	;;
+    esac
+    ##
+
     cat >> /etc/ssh/sshd_config << EOF
 # begin of $GROUPNAME
 Match group $GROUPNAME
@@ -307,7 +327,7 @@ elif test "$1" = "remove"; then
     sed -n -i -e "1,/# begin of $GROUPNAME/p;/# end of $GROUPNAME/,\$p" /etc/ssh/sshd_config
     sed -i -e "/# begin of $GROUPNAME/,/# end of $GROUPNAME/d" /etc/ssh/sshd_config
 
-    echo "Now, you can remove rootfs directory $ROOTFSDIR"
+    echo "You can remove rootfs directory $ROOTFSDIR"
 
 elif test "$1" = "enable"; then
 
@@ -347,6 +367,17 @@ elif test "$1" = "disable"; then
     if test "$2" = "webshell"; then
 	apt-get -y purge shellinabox
     fi
+
+elif test "$1" = "shell"; then
+    USERNAME="${2}"
+    GROUPNAME="${2}users"
+    ROOTFSDIR="/rootfs/${USERNAME}"
+
+    chroot $ROOTFSDIR
+
+elif test "$1" = "list"; then
+
+    ls /rootfs
 
 else
 
