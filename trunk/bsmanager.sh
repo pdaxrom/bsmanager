@@ -150,6 +150,21 @@ unpack_rootfs() {
     fi
 }
 
+get_uniq_id() {
+    local n
+    local id=1000
+
+    for n in $(cat $@ | cut -f3 -d: | sort -g | uniq); do
+	if test $id -lt $n; then
+	    break
+	elif test $id -eq $n; then
+	    id=$((id + 1))
+	fi
+    done
+
+    echo $id
+}
+
 if test "$1" = "create"; then
 
     ARCH=$4
@@ -215,8 +230,11 @@ if test "$1" = "create"; then
 	fi
     fi
 
-    groupadd $GROUPNAME
-    useradd  -g $GROUPNAME -s /bin/bash $USERNAME
+    NEWGID=$(get_uniq_id /etc/group ${ROOTFSDIR}/etc/group)
+    NEWUID=$(get_uniq_id /etc/passwd ${ROOTFSDIR}/etc/passwd)
+
+    groupadd -g $NEWGID $GROUPNAME
+    useradd  -u $NEWUID -g $GROUPNAME -s /bin/bash $USERNAME
 
     QEMU=""
     case $ARCH in
@@ -237,8 +255,8 @@ if test "$1" = "create"; then
 
     fi
 
-    chroot $ROOTFSDIR groupadd -g $(id -g $USERNAME) $GROUPNAME
-    chroot $ROOTFSDIR useradd  -u $(id -u $USERNAME) -g $GROUPNAME -N -m -s /bin/bash $USERNAME
+    chroot $ROOTFSDIR groupadd -g $NEWGID $GROUPNAME
+    chroot $ROOTFSDIR useradd  -u $NEWUID -g $GROUPNAME -N -m -s /bin/bash $USERNAME
 
     for dir in /dev /proc; do
 	FS="$dir ${ROOTFSDIR}${dir} none bind 0 0"
@@ -335,21 +353,3 @@ else
     usage $0
 
 fi
-
-#O=`getopt -n vcpu-session -l create,remove,help -o crh -- "$@"` || exit 1
-#eval set -- "$O"
-#while true; do
-#    case "$1" in
-#    -c|--create)
-#    P_BUILD="yes"; shift;;
-#    -r|--remove)
-#    P_RUN="yes"; shift;;
-#    -h|--help)
-#    usage; shift;;
-#    --)
-#    shift; break;;
-#    *)
-#    echo Error; exit 1;;
-#    esac
-#done
-
