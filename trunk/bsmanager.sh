@@ -87,15 +87,26 @@ unpack_rootfs() {
     local rootfsfile=$2
 
     if file -z $rootfsfile | grep -q partition; then
-	#case $rootfsfile in
-	
-	#esac
+	local compressed=$(file $rootfsfile | sed 's/^.*: //')
+	local tmpimage=""
+	local unpack=""
+
+	case $compressed in
+	XZ*)	unpack="xz" ;;
+	gzip*)	unpack="gzip" ;;
+	bzip2*)	unpack="bzip2" ;;
+	esac
+
+	if test ! "$unpack" = ""; then
+	    tmpimage=/tmp/disk$$.img
+	    $unpack -cd $rootfsfile > $tmpimage || error "unpacking disk image!"
+	    rootfsfile=$tmpimage
+	fi
 
 	TMPMOUNT="/tmp/mnt$$"
 	mkdir -p $TMPMOUNT
 
 	for p in `parted $rootfsfile unit B print | awk '/^ [0-9]/{ print substr($2, 1, length($2)-1); }'`; do
-
 	    echo "Partition offset $p"
 	    mount -o loop,ro,offset=$p "$rootfsfile" $TMPMOUNT
 	    if test -d ${TMPMOUNT}/bin; then
@@ -113,6 +124,10 @@ unpack_rootfs() {
 	done
 
 	rmdir $TMPMOUNT
+
+	if test ! "$tmpimage" = ""; then
+	    rm -f $tmpimage
+	fi
 
     else
 	tar xf "$rootfsfile" -C $rootfsdir || error "Unpacking rootfs!"
