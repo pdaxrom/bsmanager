@@ -270,11 +270,19 @@ if test "$1" = "create"; then
     chroot $ROOTFSDIR groupadd -g $NEWGID $GROUPNAME
     chroot $ROOTFSDIR useradd  -u $NEWUID -g $GROUPNAME -N -m -s /bin/bash $USERNAME
 
-    for dir in /dev /dev/pts /proc; do
+    for dir in $(cat /etc/fstab | awk '/^devpts \/rootfs\//{ print $2; }'); do
+	mountpoint -q $dir && umount $dir
+    done
+
+    for dir in /dev /proc; do
 	FS="$dir ${ROOTFSDIR}${dir} none bind 0 0"
 	echo "$FS" >> /etc/fstab
 	mount ${ROOTFSDIR}${dir}
     done
+
+    FS="devpts ${ROOTFSDIR}/dev/pts devpts rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000 0 0"
+    echo "$FS" >> /etc/fstab
+    mount ${ROOTFSDIR}/dev/pts
 
     ## Post config
     case $ARCH in
@@ -310,16 +318,24 @@ elif test "$1" = "remove"; then
 	exit 1
     fi
 
-    cp /etc/fstab /etc/fstab.vcpu-config.bak
+    cp /etc/fstab    /root/fstab.bsmanager.bak
 
-    for dir in /dev/pts /dev /proc; do
+    mountpoint -q ${ROOTFSDIR}/dev/pts && umount ${ROOTFSDIR}/dev/pts
+    FS="devpts ${ROOTFSDIR}/dev/pts devpts rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000 0 0"
+    grep -v "$FS" /etc/fstab > /tmp/fstab.new.$$
+    cp /tmp/fstab.new.$$ /etc/fstab
+
+    for dir in /dev /proc; do
 	mountpoint -q ${ROOTFSDIR}${dir} && umount ${ROOTFSDIR}${dir}
 	FS="$dir ${ROOTFSDIR}${dir} none bind 0 0"
 	grep -v "$FS" /etc/fstab > /tmp/fstab.new.$$
 	cp /tmp/fstab.new.$$ /etc/fstab
     done
-
     rm -f /tmp/fstab.new.$$
+
+    for dir in $(cat /etc/fstab | awk '/^devpts \/rootfs\//{ print $2; }'); do
+	mountpoint -q $dir || mount $dir
+    done
 
     if id $USERNAME &>/dev/null ; then
 	userdel $USERNAME
