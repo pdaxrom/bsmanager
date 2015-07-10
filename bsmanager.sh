@@ -201,7 +201,7 @@ if test "$1" = "create"; then
 	error "User account already exists!"
     fi
 
-    check_and_install_packages qemu-user-static binfmt-support
+    check_and_install_packages qemu-user-static binfmt-support xz-utils
 
     echo
     echo "Creating new virtual chroot"
@@ -276,12 +276,14 @@ if test "$1" = "create"; then
 	mount ${ROOTFSDIR}${dir}
     done
 
-    ##
+    ## Post config
     case $ARCH in
     armv6*)
 	echo "export QEMU_CPU=arm1176" >> ${ROOTFSDIR}/home/${USERNAME}/.bashrc
 	;;
     esac
+
+    cp -f /etc/resolv.conf ${ROOTFSDIR}/etc/
     ##
 
     cat >> /etc/ssh/sshd_config << EOF
