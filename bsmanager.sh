@@ -270,7 +270,7 @@ if test "$1" = "create"; then
     chroot $ROOTFSDIR groupadd -g $NEWGID $GROUPNAME
     chroot $ROOTFSDIR useradd  -u $NEWUID -g $GROUPNAME -N -m -s /bin/bash $USERNAME
 
-    for dir in /dev /proc; do
+    for dir in /dev /dev/pts /proc; do
 	FS="$dir ${ROOTFSDIR}${dir} none bind 0 0"
 	echo "$FS" >> /etc/fstab
 	mount ${ROOTFSDIR}${dir}
@@ -312,7 +312,7 @@ elif test "$1" = "remove"; then
 
     cp /etc/fstab /etc/fstab.vcpu-config.bak
 
-    for dir in /dev /proc; do
+    for dir in /dev/pts /dev /proc; do
 	mountpoint -q ${ROOTFSDIR}${dir} && umount ${ROOTFSDIR}${dir}
 	FS="$dir ${ROOTFSDIR}${dir} none bind 0 0"
 	grep -v "$FS" /etc/fstab > /tmp/fstab.new.$$
