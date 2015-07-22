@@ -183,7 +183,7 @@ if test "$1" = "create"; then
     ROOTFSFILE="$3"
     USERNAME="$2"
     GROUPNAME="${2}users"
-    ROOTFSDIR="/rootfs/${USERNAME}"
+    ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
 
     if test ! "$ARCH" = ""; then
 	if test $(check_valid_architecture "$ARCH") = "0"; then
@@ -270,7 +270,7 @@ if test "$1" = "create"; then
     chroot $ROOTFSDIR groupadd -g $NEWGID $GROUPNAME
     chroot $ROOTFSDIR useradd  -u $NEWUID -g $GROUPNAME -N -m -s /bin/bash $USERNAME
 
-    for dir in $(cat /etc/fstab | awk '/^devpts \/rootfs\//{ print $2; }'); do
+    for dir in $(cat /etc/fstab | awk '/^devpts \/opt\/madisa\/rootfs\//{ print $2; }'); do
 	mountpoint -q $dir && umount $dir
     done
 
@@ -311,7 +311,7 @@ elif test "$1" = "remove"; then
 
     USERNAME="${2}"
     GROUPNAME="${2}users"
-    ROOTFSDIR="/rootfs/${USERNAME}"
+    ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
 
     if ! id $USERNAME &>/dev/null ; then
 	echo "User '$USERNAME' does not exists!"
@@ -333,7 +333,7 @@ elif test "$1" = "remove"; then
     done
     rm -f /tmp/fstab.new.$$
 
-    for dir in $(cat /etc/fstab | awk '/^devpts \/rootfs\//{ print $2; }'); do
+    for dir in $(cat /etc/fstab | awk '/^devpts \/opt\/madisa\/rootfs\//{ print $2; }'); do
 	mountpoint -q $dir || mount $dir
     done
 
@@ -389,13 +389,13 @@ elif test "$1" = "disable"; then
 elif test "$1" = "shell"; then
     USERNAME="${2}"
     GROUPNAME="${2}users"
-    ROOTFSDIR="/rootfs/${USERNAME}"
+    ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
 
     chroot $ROOTFSDIR
 
 elif test "$1" = "list"; then
 
-    ls /rootfs
+    ls /opt/madisa/rootfs
 
 else
 
