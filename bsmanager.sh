@@ -439,6 +439,8 @@ elif test "$1" = "toolchain"; then
 
     done
 
+    ln -sf ${TARGET_ARCH}-gcc cc
+
     case $HOST_ARCH in
     x86-64)
 	mkdir -p ${ROOTFSDIR}/lib64/ ${ROOTFSDIR}/lib/x86_64-linux-gnu/
