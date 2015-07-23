@@ -309,7 +309,7 @@ EOF
 
 elif test "$1" = "remove"; then
 
-    USERNAME="${2}"
+    USERNAME="$2"
     GROUPNAME="${2}users"
     ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
 
@@ -387,7 +387,7 @@ elif test "$1" = "disable"; then
     fi
 
 elif test "$1" = "shell"; then
-    USERNAME="${2}"
+    USERNAME="$2"
     GROUPNAME="${2}users"
     ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
 
@@ -396,6 +396,59 @@ elif test "$1" = "shell"; then
 elif test "$1" = "list"; then
 
     ls /opt/madisa/rootfs
+
+elif test "$1" = "toolchain"; then
+    USERNAME="$2"
+    GROUPNAME="${2}users"
+    ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
+    TOOLSFILE="$3"
+
+    if ! id $USERNAME &>/dev/null ; then
+	echo "User '$USERNAME' does not exists!"
+	exit 1
+    fi
+
+    case "$TOOLSFILE" in
+    http://*|https://*|ftp://*)
+	ROOTFSTMP="/tmp/rootfs$$.dat"
+	wget "$TOOLSFILE" -O "$TOOLSTMP" || error "downloading toolchain!"
+	tar --no-same-owner -xf $TOOLSTMP -C $ROOTFSDIR
+	rm -f "$TOOLSTMP"
+	;;
+    *)
+	tar --no-same-owner -xf $TOOLSFILE -C $ROOTFSDIR
+	;;
+    esac
+
+    HOST_ARCH=$(basename $TOOLSFILE | cut -f3 -d_ | sed 's/-gcc$//')
+    TARGET_ARCH=$(basename $TOOLSFILE | cut -f1 -d_ | sed 's/-gcc$//')
+
+    SYSROOT_SETUP=${TARGET_ARCH}-sysroot-path
+
+    if test -x "${ROOTFSDIR}/opt/madisa/toolchain/bin/${SYSROOT_SETUP}"; then
+
+	chroot ${ROOTFSDIR} /opt/madisa/toolchain/bin/${SYSROOT_SETUP} --install
+
+    fi
+
+    cd ${ROOTFSDIR}/opt/madisa/toolchain/bin
+
+    for f in ${TARGET_ARCH}-*; do
+
+	ln -sf $f ${f/$TARGET_ARCH-}
+
+    done
+
+    case $HOST_ARCH in
+    x86-64)
+	mkdir -p ${ROOTFSDIR}/lib64/ ${ROOTFSDIR}/lib/x86_64-linux-gnu/
+	cp -a /lib64/* ${ROOTFSDIR}/lib64/
+	cp -a /lib/x86_64-linux-gnu/* ${ROOTFSDIR}/lib/x86_64-linux-gnu/
+	;;
+    *)
+	error "Unsupported cross toolchains for $HOST_ARCH!"
+	;;
+    esac
 
 else
 
