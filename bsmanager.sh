@@ -37,6 +37,10 @@ usage() {
     echo "List all available accounts"
     echo "$1 list"
     echo
+    echo "Native shell binaries:"
+    echo "$1 enable native"
+    echo "$1 disable native"
+    echo
     exit 0
 }
 
@@ -378,12 +382,51 @@ elif test "$1" = "enable"; then
 	fi
 
 	service shellinabox restart
+
+    elif test "$2" = "native"; then
+	USERNAME="$3"
+	GROUPNAME="${3}users"
+	ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
+
+	if ! id $USERNAME &>/dev/null ; then
+	    echo "User '$USERNAME' does not exists!"
+	    exit 1
+	fi
+
+	mkdir -p ${ROOTFSDIR}/opt/madisa/backup
+	for f in /bin/bash /bin/dash /bin/sed /bin/grep /bin/sleep; do
+	    if test -x ${ROOTFSDIR}$f -a -x $f -a ! -e ${ROOTFSDIR}/opt/madisa/backup/$f ; then
+		mkdir -p $(dirname ${ROOTFSDIR}/opt/madisa/backup/$f)
+		cp ${ROOTFSDIR}$f $(dirname ${ROOTFSDIR}/opt/madisa/backup/$f)
+		rm -f ${ROOTFSDIR}$f
+		cp $f $(dirname ${ROOTFSDIR}$f)
+	    fi
+	done
     fi
 
 elif test "$1" = "disable"; then
 
     if test "$2" = "webshell"; then
+
 	apt-get -y purge shellinabox
+
+    elif test "$2" = "native"; then
+	USERNAME="$3"
+	GROUPNAME="${3}users"
+	ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
+
+	if ! id $USERNAME &>/dev/null ; then
+	    echo "User '$USERNAME' does not exists!"
+	    exit 1
+	fi
+
+	for f in /bin/bash /bin/dash /bin/sed /bin/grep /bin/sleep; do
+	    if test -x ${ROOTFSDIR}$f -a -x ${ROOTFSDIR}/opt/madisa/backup/$f ; then
+		rm -f ${ROOTFSDIR}$f
+		cp ${ROOTFSDIR}/opt/madisa/backup/$f $(dirname ${ROOTFSDIR}$f)
+		rm -f ${ROOTFSDIR}/opt/madisa/backup/$f
+	    fi
+	done
     fi
 
 elif test "$1" = "shell"; then
