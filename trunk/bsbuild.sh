@@ -2,7 +2,9 @@
 
 TOPDIR=$PWD
 
-MAKE_ARGS=-j5
+if test "$MAKE_ARGS" = ""; then
+    MAKE_ARGS=-j5
+fi
 
 . setenv.sh
 
@@ -55,6 +57,11 @@ get_dir() {
 }
 
 build() {
+    local nodir
+    if test "$1" = "nodir"; then
+	nodir="y"
+	shift
+    fi
     local file="$1"
     local flags="$2"
     local patches="$3"
@@ -83,16 +90,24 @@ build() {
     export CPPFLAGS="-I${INST_PREFIX}/include"
     export LDFLAGS="-L${INST_PREFIX}/lib"
 
-    mkdir buildme
-    cd buildme
+    if test "$nodir" = ""; then
+	mkdir buildme
+	cd buildme
 
-    eval ../configure --prefix=$INST_PREFIX $flags || error "Configure $file"
+	eval ../configure --prefix=$INST_PREFIX $flags || error "Configure $file"
+    else
+	eval ./configure --prefix=$INST_PREFIX $flags || error "Configure $file"
+    fi
 
     make ${MAKE_ARGS} || error "make $file"
 
     make install || error "make install $file"
 
-    touch ../install.status
+    if test "$nodir" = ""; then
+	touch ../install.status
+    else
+	touch ./install.status
+    fi
 
     popd
 }
@@ -151,12 +166,30 @@ check_and_install_packages() {
     fi
 }
 
+fix_target_libm() {
+    pushd . &>/dev/null
+
+    cd ${TARGET_SYSROOT}/usr/lib/$TARGET_ARCH
+
+    local LINK=$(readlink libm.so)
+
+    if test ! -e $LINK ; then
+	echo "Broken symlink for target libm.so"
+	sudo ln -sf ../../..$LINK libm.so
+    fi
+
+    popd &>/dev/null
+}
+
 check_and_install_packages build-essential pkg-config yasm bison flex 
 #libxml-parser-perl cmake
+
+fix_target_libm
 
 mkdir -p tmp/build
 cd tmp
 
+download http://zlib.net/zlib-1.2.8.tar.xz
 download https://gmplib.org/download/gmp/gmp-6.0.0a.tar.xz
 download http://www.mpfr.org/mpfr-current/mpfr-3.1.3.tar.xz
 download ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.2.tar.gz
@@ -167,6 +200,7 @@ download http://www.bastoul.net/cloog/pages/download/cloog-0.18.3.tar.gz
 download http://ftp.gnu.org/gnu/binutils/binutils-${TARGET_BINUTILS_VERSION}.tar.bz2
 download http://gcc.cybermirror.org/releases/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
 
+build nodir zlib-1.2.8.tar.xz "--static"
 build gmp-6.0.0a.tar.xz "--enable-cxx --disable-shared" "" gmp-6.0.0
 build mpfr-3.1.3.tar.xz "--disable-shared"
 build mpc-1.0.2.tar.gz "--disable-shared"
@@ -177,7 +211,7 @@ build cloog-0.18.3.tar.gz "--disable-shared"
 build binutils-${TARGET_BINUTILS_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror"
 build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
---with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --enable-shared --disable-bootstrap \
+--with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --enable-shared --disable-bootstrap --with-system-zlib \
 --with-gmp=$INST_PREFIX --with-mpfr=$INST_PREFIX --with-mpc=$INST_PREFIX --with-cloog=$INST_PREFIX --with-isl=$INST_PREFIX --with-ppl=$INST_PREFIX \
 --disable-ppl-version-check --disable-cloog-version-check --disable-isl-version-check --enable-cloog-backend=isl \
 --enable-languages=c,c++ --enable-linker-build-id --enable-threads=posix \
@@ -199,7 +233,7 @@ rm -rf ${PKG_DIR}/${INST_PREFIX}/include ${PKG_DIR}/${INST_PREFIX}/lib/cloog-isl
     ${PKG_DIR}/${INST_PREFIX}/bin/cloog ${PKG_DIR}/${INST_PREFIX}/bin/ppl* \
     ${PKG_DIR}/${INST_PREFIX}/share/aclocal ${PKG_DIR}/${INST_PREFIX}/share/doc ${PKG_DIR}/${INST_PREFIX}/share/info
 
-find ${PKG_DIR}/${INST_PREFIX}/share/man -name "ppl*" -o -name "libppl*" | xargs rm -f
+find ${PKG_DIR}/${INST_PREFIX}/share/man -name "ppl*" -o -name "libppl*" -o -name "zlib*" | xargs rm -f
 
 strip ${PKG_DIR}/${INST_PREFIX}/bin/* ${PKG_DIR}/${INST_PREFIX}/${TARGET_ARCH}/bin/* \
     ${PKG_DIR}/${INST_PREFIX}/libexec/gcc/${TARGET_ARCH}/${TARGET_GCC_VERSION}/* \

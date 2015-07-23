@@ -4,4 +4,4 @@ TARGET_ARCH=arm-linux-gnueabihf
 TARGET_GCC_VERSION=4.9.3
 TARGET_BINUTILS_VERSION=2.25.1
 TARGET_NAME="armv7ubuntu"
-GCC_CONFIG_FLAGS="--enable-multilib --with-arch=armv7-a --with-fpu=vfpv3-d16 --with-float=hard --with-mode=thumb --with-float=hard"
+GCC_CONFIG_FLAGS="--enable-multiarch --enable-multilib --with-arch=armv7-a --with-fpu=vfpv3-d16 --with-mode=thumb --with-float=hard"
