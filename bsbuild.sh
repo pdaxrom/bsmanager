@@ -188,6 +188,8 @@ build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m
 
 PKG_DIR=/tmp/rootfs$$
 
+umask 022
+
 mkdir -p ${PKG_DIR}/${INST_PREFIX}
 
 cp -R ${INST_PREFIX}/* ${PKG_DIR}/${INST_PREFIX}/
