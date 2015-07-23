@@ -224,6 +224,6 @@ EOF
 
 chmod 755 ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-sysroot-path
 
-tar Jcf ${TOPDIR}/${TARGET_ARCH}-gcc-${TARGET_GCC_VERSION}-$(uname -m)${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
+tar Jcf ${TOPDIR}/${TARGET_ARCH}-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
 
 rm -rf ${PKG_DIR}
