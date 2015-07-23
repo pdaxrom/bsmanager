@@ -92,7 +92,7 @@ build() {
 
     make install || error "make install $file"
 
-    touch install.status
+    touch ../install.status
 
     popd
 }
@@ -163,25 +163,25 @@ download ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.2.tar.gz
 download http://isl.gforge.inria.fr/isl-0.15.tar.xz
 download http://bugseng.com/products/ppl/download/ftp/releases/1.1/ppl-1.1.tar.xz
 download http://www.bastoul.net/cloog/pages/download/cloog-0.18.3.tar.gz
+#download http://www.bastoul.net/cloog/pages/download/cloog-parma-0.16.1.tar.gz
 download http://ftp.gnu.org/gnu/binutils/binutils-2.25.1.tar.bz2
 download http://gcc.cybermirror.org/releases/gcc-4.9.3/gcc-4.9.3.tar.bz2
-download http://www.bastoul.net/cloog/pages/download/cloog-parma-0.16.1.tar.gz
 
-build gmp-6.0.0a.tar.xz "--enable-cxx" "" gmp-6.0.0
-build mpfr-3.1.3.tar.xz
-build mpc-1.0.2.tar.gz
-build isl-0.15.tar.xz
-build ppl-1.1.tar.xz "--with-gmp=$INST_DIR"
-build cloog-0.18.3.tar.gz
-build cloog-parma-0.16.1.tar.gz
+build gmp-6.0.0a.tar.xz "--enable-cxx --disable-shared" "" gmp-6.0.0
+build mpfr-3.1.3.tar.xz "--disable-shared"
+build mpc-1.0.2.tar.gz "--disable-shared"
+build isl-0.15.tar.xz "--disable-shared"
+build ppl-1.1.tar.xz "--disable-shared --with-gmp=$INST_PREFIX"
+build cloog-0.18.3.tar.gz "--disable-shared"
+#build cloog-parma-0.16.1.tar.gz "--disable-shared"
 build binutils-2.25.1.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
---with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror"
+--with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --disable-shared"
 build gcc-4.9.3.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
---with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --disable-bootstrap \
---enable-languages=c,c++ --enable-shared --enable-linker-build-id --enable-threads=posix \
+--with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --disable-shared --disable-bootstrap \
+--with-gmp=$INST_PREFIX --with-mpfr=$INST_PREFIX --with-mpc=$INST_PREFIX --with-cloog=$INST_PREFIX --with-isl=$INST_PREFIX --with-ppl=$INST_PREFIX \
+--disable-ppl-version-check --disable-cloog-version-check --disable-isl-version-check --enable-cloog-backend=isl \
+--enable-languages=c,c++ --enable-linker-build-id --enable-threads=posix \
 --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-unique-object --enable-plugin \
 --disable-sjlj-exceptions $GCC_CONFIG_FLAGS"
 
 #
-#--with-gmp=$INST_DIR --with-mpfr=$INST_DIR --with-mpc=$INST_DIR --with-cloog=$INST_DIR --with-isl=$INST_DIR --with-ppl=$INST_DIR \
-#--disable-ppl-version-check --disable-cloog-version-check --disable-isl-version-check --enable-cloog-backend=ppl \
