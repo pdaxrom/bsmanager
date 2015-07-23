@@ -206,7 +206,7 @@ strip ${PKG_DIR}/${INST_PREFIX}/bin/* ${PKG_DIR}/${INST_PREFIX}/${TARGET_ARCH}/b
 
 cat > ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-sysroot-path << EOF
 #!/bin/sh
-if test "\$1" == "--install"; then
+if test "\$1" = "--install"; then
     ARCH=\$(uname -i)
     if test "\$ARCH" = ""; then
 	ARCH=\$(uname -m)
