@@ -22,8 +22,12 @@ error() {
 
 usage() {
     echo
+    echo "BuildServer Management Utility <http://buildserver.io>"
+    echo "(c) sashz <sashz@pdaXrom.org>, 2007-2015"
+    echo
     echo "Usage:"
     echo
+    echo "Account:"
     echo "$1 create <user> <URL | path to rootfs archive> [<architecture>]"
     echo "$1 remove <user>"
     echo
@@ -40,6 +44,9 @@ usage() {
     echo "Native shell binaries:"
     echo "$1 enable native"
     echo "$1 disable native"
+    echo
+    echo "Toolchain:"
+    echo "$1 toolchain <user> <URL | path to toolchain pack>"
     echo
     exit 0
 }
