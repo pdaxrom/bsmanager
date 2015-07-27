@@ -8,6 +8,15 @@ fi
 
 . setenv.sh
 
+INST_HOST_PREFIX=${TOPDIR}/tmp/hostinst
+
+mkdir -p ${INST_HOST_PREFIX}/bin
+
+export PATH=${INST_HOST_PREFIX}/bin:$PATH
+export PKG_CONFIG_PATH="${INST_HOST_PREFIX}/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+TAR=tar
+
 error() {
     echo "ERROR: $@"
     exit 1
@@ -57,11 +66,24 @@ get_dir() {
 }
 
 build() {
+    local prefix=$INST_PREFIX
+
+    if test "$1" = "host"; then
+	prefix=$INST_HOST_PREFIX
+	shift
+	export CPPFLAGS="-I${INST_HOST_PREFIX}/include"
+	export LDFLAGS="-L${INST_HOST_PREFIX}/lib"
+    else
+	export CPPFLAGS="-I${INST_HOST_PREFIX}/include -I${INST_PREFIX}/include"
+	export LDFLAGS="-L${INST_HOST_PREFIX}/lib -L${INST_PREFIX}/lib"
+    fi
+    
     local nodir
     if test "$1" = "nodir"; then
 	nodir="y"
 	shift
     fi
+
     local file="$1"
     local flags="$2"
     local patches="$3"
@@ -75,7 +97,7 @@ build() {
 
     echo "Build $dir"
 
-    tar xf "$file" -C build
+    ${TAR} xf "$file" -C build
 
     pushd .
 
@@ -87,16 +109,13 @@ build() {
 	done
     fi
 
-    export CPPFLAGS="-I${INST_PREFIX}/include"
-    export LDFLAGS="-L${INST_PREFIX}/lib"
-
     if test "$nodir" = ""; then
 	mkdir buildme
 	cd buildme
 
-	eval ../configure --prefix=$INST_PREFIX $flags || error "Configure $file"
+	eval ../configure --prefix=$prefix $flags || error "Configure $file"
     else
-	eval ./configure --prefix=$INST_PREFIX $flags || error "Configure $file"
+	eval ./configure --prefix=$prefix $flags || error "Configure $file"
     fi
 
     make ${MAKE_ARGS} || error "make $file"
@@ -167,27 +186,37 @@ check_and_install_packages() {
 }
 
 fix_target_libm() {
-    pushd . &>/dev/null
+    if test -d ${TARGET_SYSROOT}/usr/lib/$TARGET_ARCH ; then
+	pushd . &>/dev/null
 
-    cd ${TARGET_SYSROOT}/usr/lib/$TARGET_ARCH
+	cd ${TARGET_SYSROOT}/usr/lib/$TARGET_ARCH
 
-    local LINK=$(readlink libm.so)
+	local LINK=$(readlink libm.so)
 
-    if test ! -e $LINK ; then
-	echo "Broken symlink for target libm.so"
-	sudo ln -sf ../../..$LINK libm.so
+	if test ! -e $LINK ; then
+	    echo "Broken symlink for target libm.so"
+	    sudo ln -sf ../../..$LINK libm.so
+	fi
+
+	popd &>/dev/null
     fi
-
-    popd &>/dev/null
 }
 
-check_and_install_packages build-essential pkg-config yasm bison flex 
+check_and_install_packages build-essential pkg-config yasm bison flex bzip2
 #libxml-parser-perl cmake
 
 fix_target_libm
 
 mkdir -p tmp/build
 cd tmp
+
+if test "$(which xz)" = ""; then
+    download http://tukaani.org/xz/xz-5.2.1.tar.gz
+    download http://alpha.gnu.org/gnu/tar/tar-1.23.90.tar.gz
+    build host xz-5.2.1.tar.gz
+    build host tar-1.23.90.tar.gz
+    TAR=${INST_HOST_PREFIX}/bin/tar
+fi
 
 download http://zlib.net/zlib-1.2.8.tar.xz
 download https://gmplib.org/download/gmp/gmp-6.0.0a.tar.xz
@@ -200,14 +229,14 @@ download http://www.bastoul.net/cloog/pages/download/cloog-0.18.3.tar.gz
 download http://ftp.gnu.org/gnu/binutils/binutils-${TARGET_BINUTILS_VERSION}.tar.bz2
 download http://gcc.cybermirror.org/releases/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
 
-build nodir zlib-1.2.8.tar.xz "--static"
-build gmp-6.0.0a.tar.xz "--enable-cxx --disable-shared" "" gmp-6.0.0
-build mpfr-3.1.3.tar.xz "--disable-shared"
-build mpc-1.0.2.tar.gz "--disable-shared"
-build isl-0.15.tar.xz "--disable-shared"
-build ppl-1.1.tar.xz "--disable-shared --with-gmp=$INST_PREFIX"
-build cloog-0.18.3.tar.gz "--disable-shared"
-#build cloog-parma-0.16.1.tar.gz "--disable-shared"
+build host nodir zlib-1.2.8.tar.xz "--static"
+build host gmp-6.0.0a.tar.xz "--enable-cxx --disable-shared" "" gmp-6.0.0
+build host mpfr-3.1.3.tar.xz "--disable-shared"
+build host mpc-1.0.2.tar.gz "--disable-shared"
+build host isl-0.15.tar.xz "--disable-shared"
+build host ppl-1.1.tar.xz "--disable-shared --with-gmp=$INST_HOST_PREFIX"
+build host cloog-0.18.3.tar.gz "--disable-shared"
+#build host cloog-parma-0.16.1.tar.gz "--disable-shared"
 build binutils-${TARGET_BINUTILS_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror"
 build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
@@ -228,17 +257,20 @@ mkdir -p ${PKG_DIR}/${INST_PREFIX}
 
 cp -R ${INST_PREFIX}/* ${PKG_DIR}/${INST_PREFIX}/
 
-rm -rf ${PKG_DIR}/${INST_PREFIX}/include ${PKG_DIR}/${INST_PREFIX}/lib/cloog-isl ${PKG_DIR}/${INST_PREFIX}/lib/isl \
-    ${PKG_DIR}/${INST_PREFIX}/lib/pkgconfig ${PKG_DIR}/${INST_PREFIX}/lib/lib*.a ${PKG_DIR}/${INST_PREFIX}/lib/lib*.la \
-    ${PKG_DIR}/${INST_PREFIX}/bin/cloog ${PKG_DIR}/${INST_PREFIX}/bin/ppl* \
-    ${PKG_DIR}/${INST_PREFIX}/share/aclocal ${PKG_DIR}/${INST_PREFIX}/share/doc ${PKG_DIR}/${INST_PREFIX}/share/info
+#rm -rf ${PKG_DIR}/${INST_PREFIX}/include ${PKG_DIR}/${INST_PREFIX}/lib/cloog-isl ${PKG_DIR}/${INST_PREFIX}/lib/isl \
+#    ${PKG_DIR}/${INST_PREFIX}/lib/pkgconfig ${PKG_DIR}/${INST_PREFIX}/lib/lib*.a ${PKG_DIR}/${INST_PREFIX}/lib/lib*.la \
+#    ${PKG_DIR}/${INST_PREFIX}/bin/cloog ${PKG_DIR}/${INST_PREFIX}/bin/ppl* \
+#    ${PKG_DIR}/${INST_PREFIX}/share/aclocal ${PKG_DIR}/${INST_PREFIX}/share/doc ${PKG_DIR}/${INST_PREFIX}/share/info
 
-find ${PKG_DIR}/${INST_PREFIX}/share/man -name "ppl*" -o -name "libppl*" -o -name "zlib*" | xargs rm -f
+#find ${PKG_DIR}/${INST_PREFIX}/share/man -name "ppl*" -o -name "libppl*" -o -name "zlib*" | xargs rm -f
 
 strip ${PKG_DIR}/${INST_PREFIX}/bin/* ${PKG_DIR}/${INST_PREFIX}/${TARGET_ARCH}/bin/* \
     ${PKG_DIR}/${INST_PREFIX}/libexec/gcc/${TARGET_ARCH}/${TARGET_GCC_VERSION}/* \
     ${PKG_DIR}/${INST_PREFIX}/libexec/gcc/${TARGET_ARCH}/${TARGET_GCC_VERSION}/install-tools/* \
     ${PKG_DIR}/${INST_PREFIX}/libexec/gcc/${TARGET_ARCH}/${TARGET_GCC_VERSION}/plugin/*
+
+test -e ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-cc || ln -sf ${TARGET_ARCH}-gcc ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-cc
+test -e ${PKG_DIR}/${INST_PREFIX}/bin/cc || ln -sf ${TARGET_ARCH}-gcc ${PKG_DIR}/${INST_PREFIX}/bin/cc
 
 cat > ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-sysroot-path << EOF
 #!/bin/sh
@@ -260,6 +292,10 @@ EOF
 
 chmod 755 ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-sysroot-path
 
-tar Jcf ${TOPDIR}/${TARGET_ARCH}-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
+if test "$TAR" = "tar"; then
+    ${TAR} Jcf ${TOPDIR}/${TARGET_ARCH}-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
+else
+    ${TAR} zcf ${TOPDIR}/${TARGET_ARCH}-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.gz -C ${PKG_DIR} .
+fi
 
 rm -rf ${PKG_DIR}
