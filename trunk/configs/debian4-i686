@@ -4,4 +4,4 @@ TARGET_ARCH=i686-linux-gnu
 TARGET_GCC_VERSION=4.9.3
 TARGET_BINUTILS_VERSION=2.25.1
 TARGET_NAME="debian4-i686"
-GCC_CONFIG_FLAGS="--enable-multiarch --enable-multilib --with-cpu=generic --disable-libsanitizer --disable-libcilkrts"
+GCC_CONFIG_FLAGS="--disable-multiarch --with-cpu=generic --disable-libsanitizer --disable-libcilkrts --disable-linker-build-id --disable-gnu-unique-object --disable-libatomic"
