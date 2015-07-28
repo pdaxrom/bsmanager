@@ -202,7 +202,7 @@ fix_target_libm() {
     fi
 }
 
-check_and_install_packages build-essential pkg-config yasm bison flex bzip2
+check_and_install_packages build-essential pkg-config bzip2
 #libxml-parser-perl cmake
 
 fix_target_libm
