@@ -103,6 +103,12 @@ build() {
 
     cd build/$dir
 
+    if test -d ${TOPDIR}/patches/$dir; then
+	for f in ${TOPDIR}/patches/$dir/*; do
+	    patch -p1 < $f || error "patching sources"
+	done
+    fi
+
     if [ ! "$patches" = "" ]; then
 	for f in $patches; do
 	    patch -p1 < $f || error "patch $f for $file"
@@ -239,6 +245,7 @@ build host cloog-0.18.3.tar.gz "--disable-shared"
 #build host cloog-parma-0.16.1.tar.gz "--disable-shared"
 build binutils-${TARGET_BINUTILS_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror"
+rm -rf ${INST_PREFIX}/include ${INST_PREFIX}/lib
 build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --enable-shared --disable-bootstrap --with-system-zlib \
 --with-gmp=$INST_PREFIX --with-mpfr=$INST_PREFIX --with-mpc=$INST_PREFIX --with-cloog=$INST_PREFIX --with-isl=$INST_PREFIX --with-ppl=$INST_PREFIX \
