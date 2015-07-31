@@ -1,0 +1,7 @@
+#!/bin/bash
+
+TARGET_ARCH=arm-linux-gnueabihf
+TARGET_GCC_VERSION=4.8.5
+TARGET_BINUTILS_VERSION=2.25.1
+TARGET_NAME="raspbian"
+GCC_CONFIG_FLAGS="--with-arch=armv6 --with-fpu=vfp --with-float=hard"
