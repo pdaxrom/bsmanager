@@ -283,12 +283,26 @@ cat > ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-sysroot-path << EOF
 #!/bin/sh
 if test "\$1" = "--install"; then
     ARCH=\$(uname -i)
-    if test "\$ARCH" = ""; then
+    if test "\$ARCH" = "unknown"; then
 	ARCH=\$(uname -m)
     fi
     if test "\$ARCH" != $(uname -m); then
 	mkdir -p $(dirname $TARGET_SYSROOT)
 	ln -sf / $TARGET_SYSROOT
+
+	mv ${INST_PREFIX}/${TARGET_ARCH}/bin/ld ${INST_PREFIX}/${TARGET_ARCH}/bin/ld.bin
+	cat > ${INST_PREFIX}/${TARGET_ARCH}/bin/ld << EOX
+#!/bin/bash
+
+OPT=
+for p in \\\$(echo \\\$LD_LIBRARY_PATH | tr ':' ' '); do
+    OPT="\\\$OPT -rpath-link=\\\$p"
+done
+exec \\\$0.bin \\\$OPT \\\$@
+EOX
+
+	chmod 755 ${INST_PREFIX}/${TARGET_ARCH}/bin/ld
+
     else
 	echo "Please, install sysroot to $TARGET_SYSROOT"
     fi
