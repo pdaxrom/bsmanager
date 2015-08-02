@@ -281,6 +281,8 @@ if test "$1" = "create"; then
     chroot $ROOTFSDIR groupadd -g $NEWGID $GROUPNAME
     chroot $ROOTFSDIR useradd  -u $NEWUID -g $GROUPNAME -N -m -s /bin/bash $USERNAME
 
+    ln -sf ${ROOTFSDIR}/home/$USERNAME /home/$USERNAME
+
     for dir in $(cat /etc/fstab | awk '/^devpts \/opt\/madisa\/rootfs\//{ print $2; }'); do
 	mountpoint -q $dir && umount $dir
     done
@@ -351,6 +353,7 @@ elif test "$1" = "remove"; then
     if id $USERNAME &>/dev/null ; then
 	userdel $USERNAME
 	groupdel $GROUPNAME
+	rm -f /home/$USERNAME
     fi
 
     sed -n -i -e "1,/# begin of $GROUPNAME/p;/# end of $GROUPNAME/,\$p" /etc/ssh/sshd_config
@@ -403,6 +406,7 @@ elif test "$1" = "enable"; then
 	mkdir -p ${ROOTFSDIR}/opt/madisa/backup
 	for f in /bin/bash /bin/dash /bin/sed /bin/grep /bin/sleep; do
 	    if test -x ${ROOTFSDIR}$f -a -x $f -a ! -e ${ROOTFSDIR}/opt/madisa/backup/$f ; then
+		echo "Installing $f"
 		mkdir -p $(dirname ${ROOTFSDIR}/opt/madisa/backup/$f)
 		cp ${ROOTFSDIR}$f $(dirname ${ROOTFSDIR}/opt/madisa/backup/$f)
 		rm -f ${ROOTFSDIR}$f
@@ -429,6 +433,7 @@ elif test "$1" = "disable"; then
 
 	for f in /bin/bash /bin/dash /bin/sed /bin/grep /bin/sleep; do
 	    if test -x ${ROOTFSDIR}$f -a -x ${ROOTFSDIR}/opt/madisa/backup/$f ; then
+		echo "Uninstalling $f"
 		rm -f ${ROOTFSDIR}$f
 		cp ${ROOTFSDIR}/opt/madisa/backup/$f $(dirname ${ROOTFSDIR}$f)
 		rm -f ${ROOTFSDIR}/opt/madisa/backup/$f
