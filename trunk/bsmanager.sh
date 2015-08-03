@@ -28,7 +28,7 @@ usage() {
     echo "Usage:"
     echo
     echo "Account:"
-    echo "$1 create <user> <URL | path to rootfs archive> [<architecture>]"
+    echo "$1 create <user> <URL | rootfs archive | raw disk image> [<architecture>]"
     echo "$1 remove <user>"
     echo
     echo "Webshell:"
@@ -46,7 +46,7 @@ usage() {
     echo "$1 disable native"
     echo
     echo "Toolchain:"
-    echo "$1 toolchain <user> <URL | path to toolchain pack>"
+    echo "$1 toolchain <user> <URL | toolchain archive> [URL | sysroot archive]"
     echo
     exit 0
 }
@@ -457,6 +457,7 @@ elif test "$1" = "toolchain"; then
     GROUPNAME="${2}users"
     ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
     TOOLSFILE="$3"
+    SYSROOTFILE="$4"
 
     if ! id $USERNAME &>/dev/null ; then
 	echo "User '$USERNAME' does not exists!"
@@ -475,8 +476,22 @@ elif test "$1" = "toolchain"; then
 	;;
     esac
 
-    HOST_ARCH=$(basename $TOOLSFILE | cut -f3 -d_ | sed 's/-gcc$//')
-    TARGET_ARCH=$(basename $TOOLSFILE | cut -f1 -d_ | sed 's/-gcc$//')
+    HOST_ARCH=$(basename $TOOLSFILE | cut -f3 -d_ | sed 's/-gcc$//' | sed 's/x86-64/x86_64/')
+    TARGET_ARCH=$(basename $TOOLSFILE | cut -f1 -d_ | sed 's/-gcc$//' | sed 's/x86-64/x86_64/')
+
+    if test ! "$SYSROOTFILE" = ""; then
+	case "$SYSROOTFILE" in
+	http://*|https://*|ftp://*)
+	    ROOTFSTMP="/tmp/rootfs$$.dat"
+	    wget "$SYSROOTFILE" -O "$TOOLSTMP" || error "downloading sysroot!"
+	    tar --no-same-owner -xf $TOOLSTMP -C $ROOTFSDIR
+	    rm -f "$TOOLSTMP"
+	    ;;
+	*)
+	    tar --no-same-owner -xf $SYSROOTFILE -C $ROOTFSDIR
+	    ;;
+    esac
+    fi
 
     SYSROOT_SETUP=${TARGET_ARCH}-sysroot-path
 
@@ -485,6 +500,8 @@ elif test "$1" = "toolchain"; then
 	chroot ${ROOTFSDIR} /opt/madisa/toolchain/bin/${SYSROOT_SETUP} --install
 
     fi
+
+    ln -s /opt/madisa/toolchain/bin/${TARGET_ARCH}-setenv ${ROOTFSDIR}/home/${USERNAME}/
 
     cd ${ROOTFSDIR}/opt/madisa/toolchain/bin
 
@@ -503,7 +520,6 @@ elif test "$1" = "toolchain"; then
 	cp -a /lib/x86_64-linux-gnu/* ${ROOTFSDIR}/lib/x86_64-linux-gnu/
 	;;
     *)
-	error "Unsupported cross toolchains for $HOST_ARCH!"
 	;;
     esac
 

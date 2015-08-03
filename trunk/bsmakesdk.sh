@@ -19,8 +19,6 @@ while test ! $1 = ""; do
     shift
 done
 
-echo $TARGET_ARCH
-
 case $TARGET_ARCH in
 x86_64*|aarch64*)
     rm -f ${PKG_DIR}/${TARGET_SYSROOT}/lib64
@@ -58,9 +56,9 @@ find ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib -type l | while read l; do
 done
 
 if test "$(which xz)" = ""; then
-    tar zcf ${TOPDIR}/${TARGET_ARCH}-sysroot_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.gz -C ${PKG_DIR} .
+    tar zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-sysroot_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.gz -C ${PKG_DIR} .
 else
-    tar Jcf ${TOPDIR}/${TARGET_ARCH}-sysroot_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
+    tar Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-sysroot_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
 fi
 
 rm -rf ${PKG_DIR}
