@@ -28,6 +28,27 @@ x86_64*|aarch64*)
     ;;
 esac
 
+if test -d ${PKG_DIR}/${TARGET_SYSROOT}/lib/tls; then
+    for f in ${PKG_DIR}/${TARGET_SYSROOT}/lib/tls/*; do
+	rm -f ${PKG_DIR}/${TARGET_SYSROOT}/lib/$(basename $f)
+	mv $f ${PKG_DIR}/${TARGET_SYSROOT}/lib
+    done
+    rmdir ${PKG_DIR}/${TARGET_SYSROOT}/lib/tls
+fi
+
+if test -d ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib/nptl; then
+    for f in ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib/nptl/*.a; do
+	rm -f ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib/$(basename $f)
+	mv $f ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib
+    done
+    rm -rf ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib/nptl
+fi
+
+if test -d ${PKG_DIR}/${TARGET_SYSROOT}/usr/include/nptl; then
+    cp -R ${PKG_DIR}/${TARGET_SYSROOT}/usr/include/nptl/* ${PKG_DIR}/${TARGET_SYSROOT}/usr/include
+    rm -rf ${PKG_DIR}/${TARGET_SYSROOT}/usr/include/nptl
+fi
+
 find ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib -type l | while read l; do
     case $(readlink $l) in
     /*)
