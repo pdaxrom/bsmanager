@@ -302,10 +302,18 @@ exec \\\$0.bin \\\$OPT \\\$@
 EOX
 
 	chmod 755 ${INST_PREFIX}/${TARGET_ARCH}/bin/ld
-
     else
 	echo "Please, install sysroot to $TARGET_SYSROOT"
     fi
+
+    cat > ${INST_PREFIX}/bin/${TARGET_ARCH}-setenv << EOX
+#!/bin/bash
+
+export LD_LIBRARY_PATH=\\\$(dirname \\\$(readlink -f \\\$(\$(dirname \$0)/gcc -print-file-name=libstdc++.so))):\\\$LD_LIBRARY_PATH
+export PATH=\\\$(dirname \\\$(readlink -f \\\$(\$(dirname \$0)/gcc -print-file-name=${TARGET_ARCH}-gcc))):\\\$PATH
+
+EOX
+    chmod 755 ${INST_PREFIX}/bin/${TARGET_ARCH}-setenv
 else
     echo $TARGET_SYSROOT
 fi
