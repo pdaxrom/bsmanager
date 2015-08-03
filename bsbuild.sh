@@ -287,11 +287,17 @@ if test "\$1" = "--install"; then
 	ARCH=\$(uname -m)
     fi
     if test "\$ARCH" != $(uname -m); then
-	mkdir -p $(dirname $TARGET_SYSROOT)
-	ln -sf / $TARGET_SYSROOT
 
-	mv ${INST_PREFIX}/${TARGET_ARCH}/bin/ld ${INST_PREFIX}/${TARGET_ARCH}/bin/ld.bin
-	cat > ${INST_PREFIX}/${TARGET_ARCH}/bin/ld << EOX
+	if test -e $TARGET_SYSROOT; then
+	    echo "Sysroot installed to $TARGET_SYSROOT"
+	else
+	    mkdir -p $(dirname $TARGET_SYSROOT)
+	    ln -sf / $TARGET_SYSROOT
+	fi
+
+	if test ! -f ${INST_PREFIX}/${TARGET_ARCH}/bin/ld.bin; then
+	    mv ${INST_PREFIX}/${TARGET_ARCH}/bin/ld ${INST_PREFIX}/${TARGET_ARCH}/bin/ld.bin
+	    cat > ${INST_PREFIX}/${TARGET_ARCH}/bin/ld << EOX
 #!/bin/bash
 
 OPT=
@@ -301,16 +307,19 @@ done
 exec \\\$0.bin \\\$OPT \\\$@
 EOX
 
-	chmod 755 ${INST_PREFIX}/${TARGET_ARCH}/bin/ld
+	    chmod 755 ${INST_PREFIX}/${TARGET_ARCH}/bin/ld
+	fi
     else
-	echo "Please, install sysroot to $TARGET_SYSROOT"
+	if test ! -e $TARGET_SYSROOT; then
+	    echo "Please, install sysroot to $TARGET_SYSROOT"
+	fi
     fi
 
     cat > ${INST_PREFIX}/bin/${TARGET_ARCH}-setenv << EOX
 #!/bin/bash
 
-export LD_LIBRARY_PATH=\\\$(dirname \\\$(readlink -f \\\$(\$(dirname \$0)/gcc -print-file-name=libstdc++.so))):\\\$LD_LIBRARY_PATH
-export PATH=\\\$(dirname \\\$(readlink -f \\\$(\$(dirname \$0)/gcc -print-file-name=${TARGET_ARCH}-gcc))):\\\$PATH
+export LD_LIBRARY_PATH=\\\$(dirname \\\$(readlink -f \\\$(${INST_PREFIX}/bin/gcc -print-file-name=libstdc++.so))):\\\$LD_LIBRARY_PATH
+export PATH=${INST_PREFIX}/bin:\\\$PATH
 
 EOX
     chmod 755 ${INST_PREFIX}/bin/${TARGET_ARCH}-setenv
@@ -322,9 +331,9 @@ EOF
 chmod 755 ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-sysroot-path
 
 if test "$TAR" = "tar"; then
-    ${TAR} Jcf ${TOPDIR}/${TARGET_ARCH}-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
+    ${TAR} Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
 else
-    ${TAR} zcf ${TOPDIR}/${TARGET_ARCH}-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.gz -C ${PKG_DIR} .
+    ${TAR} zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.gz -C ${PKG_DIR} .
 fi
 
 rm -rf ${PKG_DIR}
