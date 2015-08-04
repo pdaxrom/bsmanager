@@ -1,0 +1,78 @@
+diff -Nur rpm-4.4.2.3-orig/Makefile.am rpm-4.4.2.3/Makefile.am
+--- rpm-4.4.2.3-orig/Makefile.am	2008-04-01 12:28:21.000000000 +0500
++++ rpm-4.4.2.3/Makefile.am	2015-08-04 17:43:57.000000000 +0500
+@@ -32,7 +32,6 @@
+ 	$(top_builddir)/rpmdb/librpmdb.la \
+ 	$(top_builddir)/rpmio/librpmio.la \
+ 	@WITH_POPT_LIB@ \
+-	@WITH_ZLIB_LIB@ \
+ 	@LIBMISC@
+ 
+ rpmbindir = `echo $(bindir) | sed -e s,usr/bin,bin,`
+diff -Nur rpm-4.4.2.3-orig/Makefile.in rpm-4.4.2.3/Makefile.in
+--- rpm-4.4.2.3-orig/Makefile.in	2008-04-01 12:30:40.000000000 +0500
++++ rpm-4.4.2.3/Makefile.in	2015-08-04 17:43:59.000000000 +0500
+@@ -432,7 +432,6 @@
+ 	$(top_builddir)/rpmdb/librpmdb.la \
+ 	$(top_builddir)/rpmio/librpmio.la \
+ 	@WITH_POPT_LIB@ \
+-	@WITH_ZLIB_LIB@ \
+ 	@LIBMISC@
+ 
+ rpmbindir = `echo $(bindir) | sed -e s,usr/bin,bin,`
+diff -Nur rpm-4.4.2.3-orig/popt/configure rpm-4.4.2.3/popt/configure
+--- rpm-4.4.2.3-orig/popt/configure	2008-04-01 12:31:19.000000000 +0500
++++ rpm-4.4.2.3/popt/configure	2015-08-04 17:44:20.000000000 +0500
+@@ -21115,7 +21115,7 @@
+ echo "$as_me: error:
+   *** GNU gettext is required. The latest version
+   *** is always available from ftp://ftp.gnu.org/gnu/gettext/." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+   { echo "$as_me:$LINENO: result: yes" >&5
+ echo "${ECHO_T}yes" >&6; }
+ fi
+diff -Nur rpm-4.4.2.3-orig/rpmio/rpmio_internal.h rpm-4.4.2.3/rpmio/rpmio_internal.h
+--- rpm-4.4.2.3-orig/rpmio/rpmio_internal.h	2008-04-01 12:28:22.000000000 +0500
++++ rpm-4.4.2.3/rpmio/rpmio_internal.h	2015-08-04 17:44:20.000000000 +0500
+@@ -10,7 +10,7 @@
+ #include <rpmurl.h>
+ 
+ #if HAVE_BEECRYPT_API_H
+-#include <api.h>
++#include <beecrypt/api.h>
+ #else
+ #include <beecrypt.api.h>
+ #endif
+@@ -19,19 +19,19 @@
+ #include <rpmsw.h>
+ 
+ /* Drag in the beecrypt includes. */
+-#include <beecrypt.h>
+-#include <base64.h>
+-#include <dsa.h>
+-#include <endianness.h>
+-#include <md5.h>
+-#include <mp.h>
+-#include <rsa.h>
+-#include <rsapk.h>
+-#include <sha1.h>
++#include <beecrypt/beecrypt.h>
++#include <beecrypt/base64.h>
++#include <beecrypt/dsa.h>
++#include <beecrypt/endianness.h>
++#include <beecrypt/md5.h>
++#include <beecrypt/mp.h>
++#include <beecrypt/rsa.h>
++#include <beecrypt/rsapk.h>
++#include <beecrypt/sha1.h>
+ #if HAVE_BEECRYPT_API_H
+-#include <sha256.h>
+-#include <sha384.h>
+-#include <sha512.h>
++#include <beecrypt/sha256.h>
++#include <beecrypt/sha384.h>
++#include <beecrypt/sha512.h>
+ #endif
+ 
+ /** \ingroup rpmio

@@ -208,23 +208,68 @@ fix_target_libm() {
     fi
 }
 
-check_and_install_packages build-essential pkg-config bzip2
+check_and_install_packages build-essential pkg-config
 #libxml-parser-perl cmake
 
 fix_target_libm
 
+case $TARGET_ARCH in
+x86_64*|aarch64*)
+    mkdir -p ${INST_PREFIX}/lib64
+    ln -sf lib64 ${INST_PREFIX}/lib
+    ;;
+esac
+
 mkdir -p tmp/build
 cd tmp
 
-if test "$(which xz)" = ""; then
-    download http://tukaani.org/xz/xz-5.2.1.tar.gz
-    download http://alpha.gnu.org/gnu/tar/tar-1.23.90.tar.gz
-    build host xz-5.2.1.tar.gz
-    build host tar-1.23.90.tar.gz
-    TAR=${INST_HOST_PREFIX}/bin/tar
-fi
+download http://zlib.net/zlib-1.2.8.tar.gz
+download http://ftp.suse.com/pub/people/sbrabec/bzip2/tarballs/bzip2-1.0.6.0.1.tar.gz
+download http://tukaani.org/xz/xz-5.2.1.tar.gz
+download http://alpha.gnu.org/gnu/tar/tar-1.23.90.tar.gz
+build host nodir zlib-1.2.8.tar.gz "--static"
+build bzip2-1.0.6.0.1.tar.gz "--disable-static"
+build host xz-5.2.1.tar.gz
+build host tar-1.23.90.tar.gz
+TAR=${INST_HOST_PREFIX}/bin/tar
 
-download http://zlib.net/zlib-1.2.8.tar.xz
+download http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz
+download http://downloads.sourceforge.net/project/beecrypt/beecrypt/4.2.1/beecrypt-4.2.1.tar.gz
+download http://rpm5.org/files/popt/popt-1.16.tar.gz
+download http://rpm.org/releases/rpm-4.4.x/rpm-4.4.2.3.tar.gz
+
+build host ncurses-5.9.tar.gz "--disable-shared --enable-static --disable-nls"
+build host beecrypt-4.2.1.tar.gz "--enable-shared=no --enable-static=yes --with-python=no --with-java=no --with-pic --disable-nls"
+build host popt-1.16.tar.gz "--disable-shared --enable-static --with-pic --disable-nls"
+build nodir rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls"
+
+for f in libpopt librpm librpmbuild librpmdb librpmio; do
+    rm -f ${INST_PREFIX}/lib/${f}.la
+    rm -f ${INST_PREFIX}/lib/${f}.a
+done
+rm -rf ${INST_PREFIX}/include/rpm
+rm -rf ${INST_PREFIX}/include/popt.h
+
+download http://ftp.gnu.org/gnu/make/make-4.1.tar.bz2
+download http://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz
+download http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.xz
+download https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.xz
+
+build make-4.1.tar.bz2 "--disable-nls"
+build pkg-config-0.28.tar.gz "--with-internal-glib --disable-nls"
+build m4-1.4.17.tar.xz "--disable-nls"
+build Python-2.7.9.tar.xz
+
+rm -rf ${INST_PREFIX}/lib/libbz2.la ${INST_PREFIX}/lib/libpython2.7.a ${INST_PREFIX}/lib/pkgconfig ${INST_PREFIX}/include/*
+
+for f in libbz2.so.1.0.6 libpopt.so.0.0.0 librpm-4.4.so librpmbuild-4.4.so librpmdb-4.4.so librpmio-4.4.so; do
+    strip ${INST_PREFIX}/lib/$f
+done
+
+find ${INST_PREFIX}/lib/python2.7 -name "*.so" -exec strip {} \;
+
+strip ${INST_PREFIX}/lib/rpm/* &>/dev/null
+
 download https://gmplib.org/download/gmp/gmp-6.0.0a.tar.xz
 download http://www.mpfr.org/mpfr-current/mpfr-3.1.3.tar.xz
 download ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.2.tar.gz
@@ -235,7 +280,6 @@ download http://www.bastoul.net/cloog/pages/download/cloog-0.18.3.tar.gz
 download http://ftp.gnu.org/gnu/binutils/binutils-${TARGET_BINUTILS_VERSION}.tar.bz2
 download http://gcc.cybermirror.org/releases/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
 
-build host nodir zlib-1.2.8.tar.xz "--static"
 build host gmp-6.0.0a.tar.xz "--enable-cxx --disable-shared" "" gmp-6.0.0
 build host mpfr-3.1.3.tar.xz "--disable-shared"
 build host mpc-1.0.2.tar.gz "--disable-shared"
@@ -245,10 +289,19 @@ build host cloog-0.18.3.tar.gz "--disable-shared"
 #build host cloog-parma-0.16.1.tar.gz "--disable-shared"
 build binutils-${TARGET_BINUTILS_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror"
-rm -rf ${INST_PREFIX}/include ${INST_PREFIX}/lib
+
+# remove binutils headers and libs
+for f in ansidecl.h bfd.h bfdlink.h dis-asm.h plugin-api.h symcat.h; do
+    rm -f ${INST_PREFIX}/include/$f
+done
+for f in libbfd.a libbfd.la libopcodes.a libopcodes.la; do
+    rm -f ${INST_PREFIX}/lib/$f
+done
+#
+
 build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --enable-shared --disable-bootstrap --with-system-zlib \
---with-gmp=$INST_PREFIX --with-mpfr=$INST_PREFIX --with-mpc=$INST_PREFIX --with-cloog=$INST_PREFIX --with-isl=$INST_PREFIX --with-ppl=$INST_PREFIX \
+--with-gmp=$INST_HOST_PREFIX --with-mpfr=$INST_HOST_PREFIX --with-mpc=$INST_HOST_PREFIX --with-cloog=$INST_HOST_PREFIX --with-isl=$INST_HOST_PREFIX --with-ppl=$INST_HOST_PREFIX \
 --disable-ppl-version-check --disable-cloog-version-check --disable-isl-version-check --enable-cloog-backend=isl \
 --enable-languages=c,c++ --enable-linker-build-id --enable-threads=posix \
 --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-unique-object --enable-plugin \
