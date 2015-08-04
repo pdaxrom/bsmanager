@@ -262,7 +262,7 @@ build Python-2.7.9.tar.xz
 
 rm -rf ${INST_PREFIX}/lib/libbz2.la ${INST_PREFIX}/lib/libpython2.7.a ${INST_PREFIX}/lib/pkgconfig ${INST_PREFIX}/include/*
 
-for f in libbz2.so.1.0.6 libpopt.so.0.0.0 librpm-4.4.so librpmbuild-4.4.so librpmdb-4.4.so librpmio-4.4.so; do
+for f in libbz2.so.1.0.6 librpm-4.4.so librpmbuild-4.4.so librpmdb-4.4.so librpmio-4.4.so; do
     strip ${INST_PREFIX}/lib/$f
 done
 
