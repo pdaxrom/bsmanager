@@ -243,6 +243,8 @@ build host beecrypt-4.2.1.tar.gz "--enable-shared=no --enable-static=yes --with-
 build host popt-1.16.tar.gz "--disable-shared --enable-static --with-pic --disable-nls"
 build nodir rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls"
 
+ln -sf /var/tmp ${INST_PREFIX}/var
+
 for f in libpopt librpm librpmbuild librpmdb librpmio; do
     rm -f ${INST_PREFIX}/lib/${f}.la
     rm -f ${INST_PREFIX}/lib/${f}.a
@@ -270,22 +272,22 @@ find ${INST_PREFIX}/lib/python2.7 -name "*.so" -exec strip {} \;
 
 strip ${INST_PREFIX}/lib/rpm/* &>/dev/null
 
-download https://gmplib.org/download/gmp/gmp-6.0.0a.tar.xz
-download http://www.mpfr.org/mpfr-current/mpfr-3.1.3.tar.xz
-download ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.2.tar.gz
-download http://isl.gforge.inria.fr/isl-0.15.tar.xz
-download http://bugseng.com/products/ppl/download/ftp/releases/1.1/ppl-1.1.tar.xz
-download http://www.bastoul.net/cloog/pages/download/cloog-0.18.3.tar.gz
+download https://gmplib.org/download/gmp/gmp-${GMP_VERSION-6.0.0a}.tar.xz
+download http://www.mpfr.org/mpfr-current/mpfr-${MPFR_VERSION-3.1.3}.tar.xz
+download ftp://ftp.gnu.org/gnu/mpc/mpc-${MPC_VERSION-1.0.2}.tar.gz
+download http://isl.gforge.inria.fr/isl-${ISL_VERSION-0.15}.tar.xz
+download http://bugseng.com/products/ppl/download/ftp/releases/1.1/ppl-${PPL_VERSION-1.1}.tar.xz
+download http://www.bastoul.net/cloog/pages/download/cloog-${CLOOG_VERSION-0.18.3}.tar.gz
 #download http://www.bastoul.net/cloog/pages/download/cloog-parma-0.16.1.tar.gz
 download http://ftp.gnu.org/gnu/binutils/binutils-${TARGET_BINUTILS_VERSION}.tar.bz2
 download http://gcc.cybermirror.org/releases/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
 
-build host gmp-6.0.0a.tar.xz "--enable-cxx --disable-shared" "" gmp-6.0.0
-build host mpfr-3.1.3.tar.xz "--disable-shared"
-build host mpc-1.0.2.tar.gz "--disable-shared"
-build host isl-0.15.tar.xz "--disable-shared"
-build host ppl-1.1.tar.xz "--disable-shared --with-gmp=$INST_HOST_PREFIX"
-build host cloog-0.18.3.tar.gz "--disable-shared"
+build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" gmp-${GMP_SOURCE_DIR-6.0.0}
+build host mpfr-${MPFR_VERSION-3.1.3}.tar.xz "--disable-shared"
+build host mpc-${MPC_VERSION-1.0.2}.tar.gz "--disable-shared"
+build host isl-${ISL_VERSION-0.15}.tar.xz "--disable-shared"
+build host ppl-${PPL_VERSION-1.1}.tar.xz "--disable-shared --with-gmp=$INST_HOST_PREFIX"
+build host cloog-${CLOOG_VERSION-0.18.3}.tar.gz "--disable-shared"
 #build host cloog-parma-0.16.1.tar.gz "--disable-shared"
 build binutils-${TARGET_BINUTILS_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror"
