@@ -253,12 +253,12 @@ done
 rm -rf ${INST_PREFIX}/include/rpm
 rm -rf ${INST_PREFIX}/include/popt.h
 
-download http://ftp.gnu.org/gnu/make/make-4.1.tar.bz2
+download http://ftp.gnu.org/gnu/make/make-3.81.tar.bz2
 download http://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz
 download http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.xz
 download https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.xz
 
-build make-4.1.tar.bz2 "--disable-nls"
+build make-3.81.tar.bz2 "--disable-nls"
 build pkg-config-0.28.tar.gz "--with-internal-glib --disable-nls"
 build m4-1.4.17.tar.xz "--disable-nls"
 build Python-2.7.9.tar.xz
@@ -274,7 +274,7 @@ find ${INST_PREFIX}/lib/python2.7 -name "*.so" -exec strip {} \;
 strip ${INST_PREFIX}/lib/rpm/* &>/dev/null
 
 download https://gmplib.org/download/gmp/gmp-${GMP_VERSION-6.0.0a}.tar.xz
-download http://www.mpfr.org/mpfr-current/mpfr-${MPFR_VERSION-3.1.3}.tar.xz
+download http://ftp.gnu.org/gnu/mpfr/mpfr-${MPFR_VERSION-3.1.3}.tar.xz
 download ftp://ftp.gnu.org/gnu/mpc/mpc-${MPC_VERSION-1.0.2}.tar.gz
 download http://isl.gforge.inria.fr/isl-${ISL_VERSION-0.15}.tar.xz
 download http://bugseng.com/products/ppl/download/ftp/releases/1.1/ppl-${PPL_VERSION-1.1}.tar.xz
@@ -283,7 +283,7 @@ download http://www.bastoul.net/cloog/pages/download/cloog-${CLOOG_VERSION-0.18.
 download http://ftp.gnu.org/gnu/binutils/binutils-${TARGET_BINUTILS_VERSION}.tar.bz2
 download http://gcc.cybermirror.org/releases/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
 
-build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" gmp-${GMP_SOURCE_DIR-6.0.0}
+build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
 build host mpfr-${MPFR_VERSION-3.1.3}.tar.xz "--disable-shared"
 build host mpc-${MPC_VERSION-1.0.2}.tar.gz "--disable-shared"
 build host isl-${ISL_VERSION-0.15}.tar.xz "--disable-shared"
