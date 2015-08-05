@@ -253,12 +253,12 @@ done
 rm -rf ${INST_PREFIX}/include/rpm
 rm -rf ${INST_PREFIX}/include/popt.h
 
-download http://ftp.gnu.org/gnu/make/make-3.81.tar.bz2
+download http://ftp.gnu.org/gnu/make/make-${MAKE_VERSION-4.1}.tar.bz2
 download http://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz
 download http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.xz
 download https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.xz
 
-build make-3.81.tar.bz2 "--disable-nls"
+build make-${MAKE_VERSION-4.1}.tar.bz2 "--disable-nls"
 build pkg-config-0.28.tar.gz "--with-internal-glib --disable-nls"
 build m4-1.4.17.tar.xz "--disable-nls"
 build Python-2.7.9.tar.xz
