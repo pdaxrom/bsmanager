@@ -243,6 +243,7 @@ build host beecrypt-4.2.1.tar.gz "--enable-shared=no --enable-static=yes --with-
 build host popt-1.16.tar.gz "--disable-shared --enable-static --with-pic --disable-nls"
 build nodir rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls"
 
+rm -f ${INST_PREFIX}/var/tmp
 ln -sf /var/tmp ${INST_PREFIX}/var
 
 for f in libpopt librpm librpmbuild librpmdb librpmio; do
