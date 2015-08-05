@@ -1,0 +1,12 @@
+#!/bin/bash
+
+TARGET_ARCH=i686-linux-gnu
+TARGET_GCC_VERSION=4.7.4
+TARGET_BINUTILS_VERSION=2.17
+TARGET_NAME="debian4-i686"
+GCC_CONFIG_FLAGS="--disable-multiarch --with-cpu=generic --disable-libsanitizer --disable-libcilkrts --disable-linker-build-id --disable-gnu-unique-object --disable-libatomic --without-cloog --without-isl --without-ppl"
+
+GMP_VERSION=4.3.2
+GMP_SOURCE_DIR=gmp-${GMP_VERSION}
+MPC_VERSION=0.8.1
+MPFR_VERSION=2.4.2
