@@ -467,9 +467,9 @@ elif test "$1" = "toolchain"; then
     case "$TOOLSFILE" in
     http://*|https://*|ftp://*)
 	ROOTFSTMP="/tmp/rootfs$$.dat"
-	wget "$TOOLSFILE" -O "$TOOLSTMP" || error "downloading toolchain!"
-	tar --no-same-owner -xf $TOOLSTMP -C $ROOTFSDIR
-	rm -f "$TOOLSTMP"
+	wget "$TOOLSFILE" -O "$ROOTFSTMP" || error "downloading toolchain!"
+	tar --no-same-owner -xf $ROOTFSTMP -C $ROOTFSDIR
+	rm -f "$ROOTFSTMP"
 	;;
     *)
 	tar --no-same-owner -xf $TOOLSFILE -C $ROOTFSDIR
