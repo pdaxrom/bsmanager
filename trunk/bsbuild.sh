@@ -208,7 +208,7 @@ fix_target_libm() {
     fi
 }
 
-check_and_install_packages build-essential pkg-config
+check_and_install_packages build-essential pkg-config m4
 #libxml-parser-perl cmake
 
 fix_target_libm
@@ -239,7 +239,7 @@ download http://rpm5.org/files/popt/popt-1.16.tar.gz
 download http://rpm.org/releases/rpm-4.4.x/rpm-4.4.2.3.tar.gz
 
 build host ncurses-5.9.tar.gz "--disable-shared --enable-static --disable-nls"
-build host beecrypt-4.2.1.tar.gz "--enable-shared=no --enable-static=yes --with-python=no --with-java=no --with-pic --disable-nls"
+build host beecrypt-4.2.1.tar.gz "--enable-shared=no --enable-static=yes --with-python=no --with-java=no --disable-openmp --with-pic --disable-nls"
 build host popt-1.16.tar.gz "--disable-shared --enable-static --with-pic --disable-nls"
 build nodir rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls"
 
