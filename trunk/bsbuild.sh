@@ -226,11 +226,11 @@ cd tmp
 download http://zlib.net/zlib-1.2.8.tar.gz
 download http://ftp.suse.com/pub/people/sbrabec/bzip2/tarballs/bzip2-1.0.6.0.1.tar.gz
 download http://tukaani.org/xz/xz-5.2.1.tar.gz
-download http://alpha.gnu.org/gnu/tar/tar-1.23.90.tar.gz
+download http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz
 build host nodir zlib-1.2.8.tar.gz "--static"
 build bzip2-1.0.6.0.1.tar.gz "--disable-static"
 build host xz-5.2.1.tar.gz
-build host tar-1.23.90.tar.gz
+build host tar-1.28.tar.gz "FORCE_UNSAFE_CONFIGURE=1"
 TAR=${INST_HOST_PREFIX}/bin/tar
 
 download http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz
