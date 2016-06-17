@@ -281,7 +281,7 @@ download http://bugseng.com/products/ppl/download/ftp/releases/1.1/ppl-${PPL_VER
 download http://www.bastoul.net/cloog/pages/download/cloog-${CLOOG_VERSION-0.18.3}.tar.gz
 #download http://www.bastoul.net/cloog/pages/download/cloog-parma-0.16.1.tar.gz
 download http://ftp.gnu.org/gnu/binutils/binutils-${TARGET_BINUTILS_VERSION}.tar.bz2
-download http://gcc.cybermirror.org/releases/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
+download https://ftp.gnu.org/gnu/gcc/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
 
 build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
 build host mpfr-${MPFR_VERSION-3.1.3}.tar.xz "--disable-shared"
