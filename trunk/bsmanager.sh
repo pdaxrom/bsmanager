@@ -513,15 +513,21 @@ elif test "$1" = "toolchain"; then
 
     ln -sf ${TARGET_ARCH}-gcc cc
 
-    case $HOST_ARCH in
-    x86-64)
-	mkdir -p ${ROOTFSDIR}/lib64/ ${ROOTFSDIR}/lib/x86_64-linux-gnu/
-	cp -a /lib64/* ${ROOTFSDIR}/lib64/
-	cp -a /lib/x86_64-linux-gnu/* ${ROOTFSDIR}/lib/x86_64-linux-gnu/
-	;;
-    *)
-	;;
-    esac
+    cd ${ROOTFSDIR}/tmp
+    apt-get download libc6 libstdc++6 libgcc1
+    mkdir -p froot
+    for f in *.deb; do
+	dpkg-deb -R $f ${ROOTFSDIR}/tmp/froot
+    done
+
+    cd froot
+
+    cp -a lib lib64 ${ROOTFSDIR}/
+    cp -a usr/lib   ${ROOTFSDIR}/usr/
+
+    cd ..
+
+    rm -rf *.deb froot
 
 else
 
