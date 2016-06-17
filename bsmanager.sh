@@ -42,8 +42,8 @@ usage() {
     echo "$1 list"
     echo
     echo "Native shell binaries:"
-    echo "$1 enable native"
-    echo "$1 disable native"
+    echo "$1 enable native <user>"
+    echo "$1 disable native <user>"
     echo
     echo "Toolchain:"
     echo "$1 toolchain <user> <URL | toolchain archive> [URL | sysroot archive]"
@@ -261,8 +261,6 @@ if test "$1" = "create"; then
 
     QEMU=""
     case $ARCH in
-    arm*)	QEMU=qemu-arm-static ;;
-    aarch64)	QEMU=qemu-aarch64-static ;;
     i*86)	QEMU=qemu-i386-static ;;
     x86_64|amd64) QEMU=qemu-x86_64-static ;;
     powerpc|ppc) QEMU=qemu-ppc-static ;;
@@ -276,7 +274,30 @@ if test "$1" = "create"; then
 	echo "Installing qemu to chroot"
 	cp -f /usr/bin/${QEMU} ${ROOTFSDIR}/usr/bin/${QEMU}
 
+    else
+
+	case $ARCH in
+	arm*)    cp -f qemu/precompiled/qemu-arm-$(uname -m)     ${ROOTFSDIR}/usr/bin/qemu-arm-static ;;
+	aarch64) cp -f qemu/precompiled/qemu-aarch64-$(uname -m) ${ROOTFSDIR}/usr/bin/qemu-aarch64-static ;;
+	esac
+
     fi
+
+    cd ${ROOTFSDIR}/tmp
+    apt-get download libc6 libstdc++6 libgcc1 libtinfo5 libpcre3 libselinux1
+    mkdir -p froot
+    for f in *.deb; do
+	dpkg-deb -R $f ${ROOTFSDIR}/tmp/froot
+    done
+
+    cd froot
+
+    cp -a lib lib64 ${ROOTFSDIR}/
+    cp -a usr/lib   ${ROOTFSDIR}/usr/
+
+    cd ..
+
+    rm -rf *.deb froot
 
     chroot $ROOTFSDIR groupadd -g $NEWGID $GROUPNAME
     chroot $ROOTFSDIR useradd  -u $NEWUID -g $GROUPNAME -N -m -s /bin/bash $USERNAME
@@ -359,7 +380,7 @@ elif test "$1" = "remove"; then
     sed -n -i -e "1,/# begin of $GROUPNAME/p;/# end of $GROUPNAME/,\$p" /etc/ssh/sshd_config
     sed -i -e "/# begin of $GROUPNAME/,/# end of $GROUPNAME/d" /etc/ssh/sshd_config
 
-    echo "You can remove rootfs directory $ROOTFSDIR"
+    echo "Account deleted. Remove rootfs directory $ROOTFSDIR manually."
 
 elif test "$1" = "enable"; then
 
@@ -512,22 +533,6 @@ elif test "$1" = "toolchain"; then
     done
 
     ln -sf ${TARGET_ARCH}-gcc cc
-
-    cd ${ROOTFSDIR}/tmp
-    apt-get download libc6 libstdc++6 libgcc1
-    mkdir -p froot
-    for f in *.deb; do
-	dpkg-deb -R $f ${ROOTFSDIR}/tmp/froot
-    done
-
-    cd froot
-
-    cp -a lib lib64 ${ROOTFSDIR}/
-    cp -a usr/lib   ${ROOTFSDIR}/usr/
-
-    cd ..
-
-    rm -rf *.deb froot
 
 else
 
