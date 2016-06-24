@@ -283,7 +283,15 @@ download http://www.bastoul.net/cloog/pages/download/cloog-${CLOOG_VERSION-0.18.
 download http://ftp.gnu.org/gnu/binutils/binutils-${TARGET_BINUTILS_VERSION}.tar.bz2
 download https://ftp.gnu.org/gnu/gcc/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
 
-build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
+case $(uname -m) in
+armv*)
+    build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared --build=arm" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
+    ;;
+*)
+    build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
+    ;;
+esac
+
 build host mpfr-${MPFR_VERSION-3.1.3}.tar.xz "--disable-shared"
 build host mpc-${MPC_VERSION-1.0.2}.tar.gz "--disable-shared"
 build host isl-${ISL_VERSION-0.15}.tar.xz "--disable-shared"
@@ -301,6 +309,15 @@ for f in libbfd.a libbfd.la libopcodes.a libopcodes.la; do
     rm -f ${INST_PREFIX}/lib/$f
 done
 #
+
+case $(uname -m) in
+armv*)
+    #
+    # compilation crashing if optimization enabled
+    #
+    GCC_CONFIG_FLAGS="$GCC_CONFIG_FLAGS CFLAGS=-O CXXFLAGS=-O"
+    ;;
+esac
 
 build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --enable-shared --disable-bootstrap --with-system-zlib \
