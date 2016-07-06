@@ -1,0 +1,13 @@
+diff -Nur bzip2-1.0.6.0.1-orig/config.guess bzip2-1.0.6.0.1/config.guess
+--- bzip2-1.0.6.0.1-orig/config.guess	2010-07-01 20:27:14.000000000 +0500
++++ bzip2-1.0.6.0.1/config.guess	2016-07-06 23:05:14.425468940 +0400
+@@ -881,6 +881,9 @@
+ 	if test "$?" = 0 ; then LIBC="libc1" ; else LIBC="" ; fi
+ 	echo ${UNAME_MACHINE}-${VENDOR}-linux-gnu${LIBC}
+ 	exit ;;
++    aarch64:Linux:*:*)
++	echo ${UNAME_MACHINE}-unknown-linux-gnu
++	exit ;;
+     arm*:Linux:*:*)
+ 	eval $set_cc_for_build
+ 	if echo __ARM_EABI__ | $CC_FOR_BUILD -E - 2>/dev/null \

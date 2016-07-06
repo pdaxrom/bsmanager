@@ -233,12 +233,12 @@ build host xz-5.2.1.tar.gz
 build host tar-1.28.tar.gz "FORCE_UNSAFE_CONFIGURE=1"
 TAR=${INST_HOST_PREFIX}/bin/tar
 
-download http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz
+download http://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.0.tar.gz
 download http://downloads.sourceforge.net/project/beecrypt/beecrypt/4.2.1/beecrypt-4.2.1.tar.gz
 download http://rpm5.org/files/popt/popt-1.16.tar.gz
 download http://rpm.org/releases/rpm-4.4.x/rpm-4.4.2.3.tar.gz
 
-build host ncurses-5.9.tar.gz "--disable-shared --enable-static --disable-nls"
+build host ncurses-6.0.tar.gz "--disable-shared --enable-static --disable-nls"
 build host beecrypt-4.2.1.tar.gz "--enable-shared=no --enable-static=yes --with-python=no --with-java=no --disable-openmp --with-pic --disable-nls"
 build host popt-1.16.tar.gz "--disable-shared --enable-static --with-pic --disable-nls"
 build nodir rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls"
