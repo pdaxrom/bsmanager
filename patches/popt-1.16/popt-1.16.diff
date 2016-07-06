@@ -1,0 +1,13 @@
+diff -Nur popt-1.16-orig/config.guess popt-1.16/config.guess
+--- popt-1.16-orig/config.guess	2010-04-26 17:16:44.000000000 +0500
++++ popt-1.16/config.guess	2016-07-06 23:36:12.939496641 +0400
+@@ -871,6 +871,9 @@
+ 	if test "$?" = 0 ; then LIBC="libc1" ; else LIBC="" ; fi
+ 	echo ${UNAME_MACHINE}-unknown-linux-gnu${LIBC}
+ 	exit ;;
++    aarch64:Linux:*:*)
++	echo ${UNAME_MACHINE}-unknown-linux-gnu
++	exit ;;
+     arm*:Linux:*:*)
+ 	eval $set_cc_for_build
+ 	if echo __ARM_EABI__ | $CC_FOR_BUILD -E - 2>/dev/null \

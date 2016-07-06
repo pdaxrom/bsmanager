@@ -1,6 +1,19 @@
+diff -Nur rpm-4.4.2.3-orig/config.guess rpm-4.4.2.3/config.guess
+--- rpm-4.4.2.3-orig/config.guess	2007-08-29 17:28:46.000000000 +0500
++++ rpm-4.4.2.3/config.guess	2016-07-06 23:41:47.019197032 +0400
+@@ -832,6 +832,9 @@
+     i*86:Minix:*:*)
+ 	echo ${UNAME_MACHINE}-pc-minix
+ 	exit ;;
++    aarch64:Linux:*:*)
++	echo ${UNAME_MACHINE}-unknown-linux-gnu
++	exit ;;
+     arm*:Linux:*:*)
+ 	echo ${UNAME_MACHINE}-unknown-linux-gnu
+ 	exit ;;
 diff -Nur rpm-4.4.2.3-orig/configure rpm-4.4.2.3/configure
 --- rpm-4.4.2.3-orig/configure	2008-04-01 12:30:41.000000000 +0500
-+++ rpm-4.4.2.3/configure	2015-08-05 01:37:30.000000000 +0500
++++ rpm-4.4.2.3/configure	2016-07-06 23:41:47.039197612 +0400
 @@ -1028,7 +1028,7 @@
  FFLAGS
  YACC
@@ -19,9 +32,22 @@ diff -Nur rpm-4.4.2.3-orig/configure rpm-4.4.2.3/configure
    WITH_POPT_SUBDIR=popt
    WITH_POPT_INCLUDE="-I\${top_srcdir}/${WITH_POPT_SUBDIR}"
    WITH_POPT_LIB="\${top_builddir}/${WITH_POPT_SUBDIR}/libpopt.la"
+diff -Nur rpm-4.4.2.3-orig/db/dist/config.guess rpm-4.4.2.3/db/dist/config.guess
+--- rpm-4.4.2.3-orig/db/dist/config.guess	2008-04-01 12:28:21.000000000 +0500
++++ rpm-4.4.2.3/db/dist/config.guess	2016-07-06 23:42:12.249929637 +0400
+@@ -818,6 +818,9 @@
+     i*86:Minix:*:*)
+ 	echo ${UNAME_MACHINE}-pc-minix
+ 	exit 0 ;;
++    aarch64:Linux:*:*)
++	echo ${UNAME_MACHINE}-unknown-linux-gnu
++	exit ;;
+     arm*:Linux:*:*)
+ 	echo ${UNAME_MACHINE}-unknown-linux-gnu
+ 	exit 0 ;;
 diff -Nur rpm-4.4.2.3-orig/Makefile.am rpm-4.4.2.3/Makefile.am
 --- rpm-4.4.2.3-orig/Makefile.am	2008-04-01 12:28:21.000000000 +0500
-+++ rpm-4.4.2.3/Makefile.am	2015-08-05 01:37:37.000000000 +0500
++++ rpm-4.4.2.3/Makefile.am	2016-07-06 23:41:47.049197903 +0400
 @@ -31,8 +31,6 @@
  	$(top_builddir)/lib/librpm.la \
  	$(top_builddir)/rpmdb/librpmdb.la \
@@ -33,7 +59,7 @@ diff -Nur rpm-4.4.2.3-orig/Makefile.am rpm-4.4.2.3/Makefile.am
  rpmbindir = `echo $(bindir) | sed -e s,usr/bin,bin,`
 diff -Nur rpm-4.4.2.3-orig/Makefile.in rpm-4.4.2.3/Makefile.in
 --- rpm-4.4.2.3-orig/Makefile.in	2008-04-01 12:30:40.000000000 +0500
-+++ rpm-4.4.2.3/Makefile.in	2015-08-05 01:37:42.000000000 +0500
++++ rpm-4.4.2.3/Makefile.in	2016-07-06 23:41:47.049197903 +0400
 @@ -431,8 +431,6 @@
  	$(top_builddir)/lib/librpm.la \
  	$(top_builddir)/rpmdb/librpmdb.la \
@@ -53616,7 +53642,7 @@ diff -Nur rpm-4.4.2.3-orig/popt/test-poptrc rpm-4.4.2.3/popt/test-poptrc
 -test1 exec -a /bin/echo
 diff -Nur rpm-4.4.2.3-orig/rpmio/rpmio_internal.h rpm-4.4.2.3/rpmio/rpmio_internal.h
 --- rpm-4.4.2.3-orig/rpmio/rpmio_internal.h	2008-04-01 12:28:22.000000000 +0500
-+++ rpm-4.4.2.3/rpmio/rpmio_internal.h	2015-08-05 01:37:30.000000000 +0500
++++ rpm-4.4.2.3/rpmio/rpmio_internal.h	2016-07-06 23:41:47.229203129 +0400
 @@ -10,7 +10,7 @@
  #include <rpmurl.h>
  

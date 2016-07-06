@@ -1,0 +1,13 @@
+diff -Nur beecrypt-4.2.1-orig/config.guess beecrypt-4.2.1/config.guess
+--- beecrypt-4.2.1-orig/config.guess	2009-07-09 00:04:44.000000000 +0500
++++ beecrypt-4.2.1/config.guess	2016-07-06 23:31:10.250707866 +0400
+@@ -865,6 +865,9 @@
+     i*86:Minix:*:*)
+ 	echo ${UNAME_MACHINE}-pc-minix
+ 	exit ;;
++    aarch64:Linux:*:*)
++	echo ${UNAME_MACHINE}-unknown-linux-gnu
++	exit ;;
+     arm*:Linux:*:*)
+ 	eval $set_cc_for_build
+ 	if echo __ARM_EABI__ | $CC_FOR_BUILD -E - 2>/dev/null \
