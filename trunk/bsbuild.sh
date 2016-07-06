@@ -75,7 +75,7 @@ build() {
 	export LDFLAGS="-L${INST_HOST_PREFIX}/lib"
     else
 	export CPPFLAGS="-I${INST_HOST_PREFIX}/include -I${INST_PREFIX}/include"
-	export LDFLAGS="-L${INST_HOST_PREFIX}/lib -L${INST_PREFIX}/lib"
+	export LDFLAGS="-L${INST_HOST_PREFIX}/lib -L${INST_PREFIX}/lib -Wl,-rpath,${INST_PREFIX}/lib"
     fi
     
     local nodir
@@ -213,10 +213,10 @@ check_and_install_packages build-essential pkg-config m4
 
 fix_target_libm
 
-case $TARGET_ARCH in
-x86_64*|aarch64*)
-    mkdir -p ${INST_PREFIX}/lib64
-    ln -sf lib64 ${INST_PREFIX}/lib
+case $(uname -m) in
+x86_64*|aarch64*|mips64*)
+    mkdir -p ${INST_PREFIX}/lib
+    test -e ${INST_PREFIX}/lib64 || ln -sf lib ${INST_PREFIX}/lib64
     ;;
 esac
 
@@ -238,7 +238,7 @@ download http://downloads.sourceforge.net/project/beecrypt/beecrypt/4.2.1/beecry
 download http://rpm5.org/files/popt/popt-1.16.tar.gz
 download http://rpm.org/releases/rpm-4.4.x/rpm-4.4.2.3.tar.gz
 
-build host ncurses-6.0.tar.gz "--disable-shared --enable-static --disable-nls"
+build host ncurses-6.0.tar.gz "--disable-shared --enable-static --disable-nls CFLAGS=\"-O2 -fPIC\" CXXFLAGS=\"-O2 -fPIC\""
 build host beecrypt-4.2.1.tar.gz "--enable-shared=no --enable-static=yes --with-python=no --with-java=no --disable-openmp --with-pic --disable-nls"
 build host popt-1.16.tar.gz "--disable-shared --enable-static --with-pic --disable-nls"
 build nodir rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls"
