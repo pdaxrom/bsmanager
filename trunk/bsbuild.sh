@@ -255,6 +255,11 @@ done
 rm -rf ${INST_PREFIX}/include/rpm
 rm -rf ${INST_PREFIX}/include/popt.h
 
+download http://www.cpan.org/src/5.0/perl-5.22.2.tar.gz
+build nodir perl-5.22.2.tar.gz
+
+find ${INST_PREFIX}/lib/perl5 -name "*.so" -exec chmod 644 {} \;  -exec strip {} \;
+
 download https://github.com/ccache/ccache/archive/v3.2.5.tar.gz ccache-3.2.5.tar.gz
 download http://ftp.gnu.org/gnu/make/make-${MAKE_VERSION-4.1}.tar.bz2
 download http://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz
