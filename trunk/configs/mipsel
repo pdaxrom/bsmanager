@@ -2,6 +2,6 @@
 
 TARGET_ARCH=mipsel-linux-gnu
 TARGET_GCC_VERSION=5.4.0
-TARGET_BINUTILS_VERSION=2.25.1
+TARGET_BINUTILS_VERSION=2.26.1
 TARGET_NAME="mipsel"
 GCC_CONFIG_FLAGS="--with-arch-directory=mips --enable-multiarch --enable-multilib --with-arch-32=mips2 --with-tune-32=mips32 --enable-targets=all --with-arch-64=mips3 --with-tune-64=mips64"
