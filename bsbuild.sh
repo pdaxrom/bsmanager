@@ -261,12 +261,14 @@ build nodir perl-5.22.2.tar.gz
 find ${INST_PREFIX}/lib/perl5 -name "*.so" -exec chmod 644 {} \;  -exec strip {} \;
 
 download https://github.com/ccache/ccache/archive/v3.2.5.tar.gz ccache-3.2.5.tar.gz
+download ftp://ftp.astron.com/pub/file/file-5.28.tar.gz
 download http://ftp.gnu.org/gnu/make/make-${MAKE_VERSION-4.1}.tar.bz2
 download http://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz
 download http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.xz
 download https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.xz
 
 build ccache-3.2.5.tar.gz
+build file-5.28.tar.gz
 build make-${MAKE_VERSION-4.1}.tar.bz2 "--disable-nls"
 build pkg-config-0.28.tar.gz "--with-internal-glib --disable-nls"
 build m4-1.4.17.tar.xz "--disable-nls"
