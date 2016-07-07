@@ -425,10 +425,10 @@ rm -rf ${PKG_DIR}/${INST_PREFIX}/include
 
 if test "$TAR" = "tar"; then
     ${TAR} Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(uname -m | sed 's/_/-/').tar.xz -C ${PKG_TOOLS_DIR} .
-    ${TAR} Jcf ${TOPDIR}/buildtools_$(uname -m | sed 's/_/-/').tar.xz -C ${PKG_DIR} .
+    ${TAR} Jcf ${TOPDIR}/buildtools_all_$(uname -m | sed 's/_/-/').tar.xz -C ${PKG_DIR} .
 else
     ${TAR} zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(uname -m | sed 's/_/-/').tar.gz -C ${PKG_TOOLS_DIR} .
-    ${TAR} zcf ${TOPDIR}/buildtools_$(uname -m | sed 's/_/-/').tar.gz -C ${PKG_DIR} .
+    ${TAR} zcf ${TOPDIR}/buildtools_all_$(uname -m | sed 's/_/-/').tar.gz -C ${PKG_DIR} .
 fi
 
 rm -rf ${PKG_DIR}
