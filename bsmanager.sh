@@ -498,7 +498,7 @@ elif test "$1" = "toolchain"; then
 	;;
     esac
 
-    HOST_ARCH=$(basename $TOOLSFILE | cut -f3 -d_ | sed 's/-gcc$//' | sed 's/x86-64/x86_64/')
+    HOST_ARCH=$(basename $TOOLSFILE | rev | cut -f1 -d_ | rev | sed 's/\..*$//' | sed 's/x86-64/x86_64/')
     TARGET_ARCH=$(basename $TOOLSFILE | cut -f1 -d_ | sed 's/-gcc$//' | sed 's/x86-64/x86_64/')
 
     if test ! "$SYSROOTFILE" = ""; then
@@ -515,25 +515,29 @@ elif test "$1" = "toolchain"; then
     esac
     fi
 
-    SYSROOT_SETUP=${TARGET_ARCH}-sysroot-path
+    if test -d "${ROOTFSDIR}/opt/madisa/toolchain/${TARGET_ARCH}/bin"; then
 
-    if test -x "${ROOTFSDIR}/opt/madisa/toolchain/bin/${SYSROOT_SETUP}"; then
+	SYSROOT_SETUP=${TARGET_ARCH}-sysroot-path
 
-	chroot ${ROOTFSDIR} /opt/madisa/toolchain/bin/${SYSROOT_SETUP} --install
+	if test -x "${ROOTFSDIR}/opt/madisa/toolchain/bin/${SYSROOT_SETUP}"; then
+
+	    chroot ${ROOTFSDIR} /opt/madisa/toolchain/bin/${SYSROOT_SETUP} --install
+
+	fi
+
+	ln -s /opt/madisa/toolchain/bin/${TARGET_ARCH}-setenv ${ROOTFSDIR}/home/${USERNAME}/
+
+	cd ${ROOTFSDIR}/opt/madisa/toolchain/bin
+
+	for f in ${TARGET_ARCH}-*; do
+
+	    ln -sf $f ${f/$TARGET_ARCH-}
+
+	done
+
+	ln -sf ${TARGET_ARCH}-gcc cc
 
     fi
-
-    ln -s /opt/madisa/toolchain/bin/${TARGET_ARCH}-setenv ${ROOTFSDIR}/home/${USERNAME}/
-
-    cd ${ROOTFSDIR}/opt/madisa/toolchain/bin
-
-    for f in ${TARGET_ARCH}-*; do
-
-	ln -sf $f ${f/$TARGET_ARCH-}
-
-    done
-
-    ln -sf ${TARGET_ARCH}-gcc cc
 
 else
 
