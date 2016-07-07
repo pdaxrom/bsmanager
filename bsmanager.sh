@@ -292,7 +292,8 @@ if test "$1" = "create"; then
 
     cd froot
 
-    cp -a lib lib64 ${ROOTFSDIR}/
+    test -e lib64 && cp -a lib64 ${ROOTFSDIR}/
+    cp -a lib       ${ROOTFSDIR}/
     cp -a usr/lib   ${ROOTFSDIR}/usr/
 
     cd ..
