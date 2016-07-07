@@ -334,19 +334,14 @@ build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m
 # prepare crosscompiler pack
 
 PKG_DIR=/tmp/rootfs$$
+PKG_TOOLS_DIR=/tmp/rootfs-tools$$
 
 umask 022
 
 mkdir -p ${PKG_DIR}/${INST_PREFIX}
+mkdir -p ${PKG_TOOLS_DIR}/${INST_PREFIX}
 
 cp -R ${INST_PREFIX}/* ${PKG_DIR}/${INST_PREFIX}/
-
-#rm -rf ${PKG_DIR}/${INST_PREFIX}/include ${PKG_DIR}/${INST_PREFIX}/lib/cloog-isl ${PKG_DIR}/${INST_PREFIX}/lib/isl \
-#    ${PKG_DIR}/${INST_PREFIX}/lib/pkgconfig ${PKG_DIR}/${INST_PREFIX}/lib/lib*.a ${PKG_DIR}/${INST_PREFIX}/lib/lib*.la \
-#    ${PKG_DIR}/${INST_PREFIX}/bin/cloog ${PKG_DIR}/${INST_PREFIX}/bin/ppl* \
-#    ${PKG_DIR}/${INST_PREFIX}/share/aclocal ${PKG_DIR}/${INST_PREFIX}/share/doc ${PKG_DIR}/${INST_PREFIX}/share/info
-
-#find ${PKG_DIR}/${INST_PREFIX}/share/man -name "ppl*" -o -name "libppl*" -o -name "zlib*" | xargs rm -f
 
 strip ${PKG_DIR}/${INST_PREFIX}/bin/* ${PKG_DIR}/${INST_PREFIX}/${TARGET_ARCH}/bin/* \
     ${PKG_DIR}/${INST_PREFIX}/libexec/gcc/${TARGET_ARCH}/${TARGET_GCC_VERSION}/* \
@@ -354,7 +349,6 @@ strip ${PKG_DIR}/${INST_PREFIX}/bin/* ${PKG_DIR}/${INST_PREFIX}/${TARGET_ARCH}/b
     ${PKG_DIR}/${INST_PREFIX}/libexec/gcc/${TARGET_ARCH}/${TARGET_GCC_VERSION}/plugin/*
 
 test -e ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-cc || ln -sf ${TARGET_ARCH}-gcc ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-cc
-test -e ${PKG_DIR}/${INST_PREFIX}/bin/cc || ln -sf ${TARGET_ARCH}-gcc ${PKG_DIR}/${INST_PREFIX}/bin/cc
 
 cat > ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-sysroot-path << EOF
 #!/bin/sh
@@ -363,6 +357,7 @@ if test "\$1" = "--install"; then
     if test "\$ARCH" = "unknown"; then
 	ARCH=\$(uname -m)
     fi
+
     if test "\$ARCH" != $(uname -m); then
 
 	if test -e $TARGET_SYSROOT; then
@@ -386,10 +381,14 @@ EOX
 
 	    chmod 755 ${INST_PREFIX}/${TARGET_ARCH}/bin/ld
 	fi
+
+	which cc >/dev/null || ln -sf ${TARGET_ARCH}-gcc ${INST_PREFIX}/bin/cc
     else
 	if test ! -e $TARGET_SYSROOT; then
 	    echo "Please, install sysroot to $TARGET_SYSROOT"
 	fi
+
+	ln -sf ${TARGET_ARCH}-gcc ${INST_PREFIX}/bin/cc
     fi
 
     cat > ${INST_PREFIX}/bin/${TARGET_ARCH}-setenv << EOX
@@ -407,10 +406,30 @@ EOF
 
 chmod 755 ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}-sysroot-path
 
+mkdir -p ${PKG_TOOLS_DIR}/${INST_PREFIX}/bin
+mkdir -p ${PKG_TOOLS_DIR}/${INST_PREFIX}/lib
+mkdir -p ${PKG_TOOLS_DIR}/${INST_PREFIX}/libexec
+test -e ${PKG_DIR}/${INST_PREFIX}/lib64 && ln -sf lib ${PKG_TOOLS_DIR}/${INST_PREFIX}/lib64
+
+mv ${PKG_DIR}/${INST_PREFIX}/${TARGET_ARCH}      ${PKG_TOOLS_DIR}/${INST_PREFIX}/
+mv ${PKG_DIR}/${INST_PREFIX}/bin/${TARGET_ARCH}* ${PKG_TOOLS_DIR}/${INST_PREFIX}/bin/
+mv ${PKG_DIR}/${INST_PREFIX}/lib/gcc             ${PKG_TOOLS_DIR}/${INST_PREFIX}/lib/
+mv ${PKG_DIR}/${INST_PREFIX}/libexec/gcc         ${PKG_TOOLS_DIR}/${INST_PREFIX}/libexec/
+
+rm -rf ${PKG_DIR}/${INST_PREFIX}/share/aclocal
+rm -rf ${PKG_DIR}/${INST_PREFIX}/share/doc
+rm -rf ${PKG_DIR}/${INST_PREFIX}/share/gcc*
+rm -rf ${PKG_DIR}/${INST_PREFIX}/share/info
+rm -rf ${PKG_DIR}/${INST_PREFIX}/share/man
+rm -rf ${PKG_DIR}/${INST_PREFIX}/include
+
 if test "$TAR" = "tar"; then
-    ${TAR} Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
+    ${TAR} Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(uname -m | sed 's/_/-/').tar.xz -C ${PKG_TOOLS_DIR} .
+    ${TAR} Jcf ${TOPDIR}/buildtools_$(uname -m | sed 's/_/-/').tar.xz -C ${PKG_DIR} .
 else
-    ${TAR} zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.gz -C ${PKG_DIR} .
+    ${TAR} zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(uname -m | sed 's/_/-/').tar.gz -C ${PKG_TOOLS_DIR} .
+    ${TAR} zcf ${TOPDIR}/buildtools_$(uname -m | sed 's/_/-/').tar.gz -C ${PKG_DIR} .
 fi
 
 rm -rf ${PKG_DIR}
+rm -rf ${PKG_TOOLS_DIR}
