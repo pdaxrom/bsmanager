@@ -88,9 +88,9 @@ find ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib -type l | while read l; do
 done
 
 if test "$(which xz)" = ""; then
-    tar zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-sysroot_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.gz -C ${PKG_DIR} .
+    tar zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-sysroot${PACKAGE_ID}_all.tar.gz -C ${PKG_DIR} .
 else
-    tar Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-sysroot_$(uname -m | sed 's/_/-/')${PACKAGE_ID}.tar.xz -C ${PKG_DIR} .
+    tar Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-sysroot${PACKAGE_ID}_all.tar.xz -C ${PKG_DIR} .
 fi
 
 rm -rf ${PKG_DIR}
