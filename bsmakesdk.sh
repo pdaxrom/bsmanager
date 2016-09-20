@@ -10,21 +10,47 @@ fi
 
 shift
 
+error() {
+    echo "ERROR: $@"
+    exit 1
+}
+
 PKG_DIR=/tmp/sdksysroot$$
 
 mkdir -p ${PKG_DIR}/${TARGET_SYSROOT}
 
-while test ! $1 = ""; do
-    dpkg-deb -x $1 ${PKG_DIR}/${TARGET_SYSROOT}
-    shift
+ARCH=""
+case ${TARGET_ARCH} in
+arm*)		ARCH=armhf ;;
+aarch64*)	ARCH=arm64 ;;
+*)
+    error "Not supported arch $TARGET_ARCH" ;;
+esac
+
+LIST="libc6:${ARCH} libc6-dev:${ARCH} linux-libc-dev:${ARCH}"
+#" libgcc1:${ARCH} libgcc-5-dev:${ARCH} libstdc++6:${ARCH} libstdc++-5-dev:${ARCH}"
+
+mkdir -p ${TOPDIR}/tmp/deb-${ARCH}
+
+cd ${TOPDIR}/tmp/deb-${ARCH}
+
+dpkg-architecture -i $ARCH || dpkg --add-architecture $ARCH
+
+apt-get update
+apt-get download $LIST
+
+dpkg-architecture -i $ARCH || dpkg --remove-architecture $ARCH
+
+for p in *.deb; do
+    dpkg-deb -x $p ${PKG_DIR}/${TARGET_SYSROOT}
 done
 
-case $TARGET_ARCH in
-x86_64*|aarch64*)
-    rm -f ${PKG_DIR}/${TARGET_SYSROOT}/lib64
-    ln -sf lib ${PKG_DIR}/${TARGET_SYSROOT}/lib64
-    ;;
-esac
+#case $TARGET_ARCH in
+#x86_64*|aarch64*)
+#    rm -f ${PKG_DIR}/${TARGET_SYSROOT}/lib64
+#    ln -sf lib ${PKG_DIR}/${TARGET_SYSROOT}/lib64
+#    ;;
+#esac
 
 if test -d ${PKG_DIR}/${TARGET_SYSROOT}/lib/tls; then
     for f in ${PKG_DIR}/${TARGET_SYSROOT}/lib/tls/*; do
@@ -50,7 +76,13 @@ fi
 find ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib -type l | while read l; do
     case $(readlink $l) in
     /*)
-	ln -sf ../..$(readlink $l) $l
+	from="$(readlink $l)"
+	ex="${PKG_DIR}/${TARGET_SYSROOT}"
+	to="$(realpath -m /${l/$ex})"
+	todir=$(dirname $to)
+	toname=$(basename $to)
+	new=$(realpath -m --relative-to=$todir $from)
+	ln -sf $new $l
 	;;
     esac
 done
