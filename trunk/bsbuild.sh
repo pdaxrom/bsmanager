@@ -3,7 +3,7 @@
 TOPDIR=$PWD
 
 if test "$MAKE_ARGS" = ""; then
-    MAKE_ARGS=-j5
+    MAKE_ARGS=-j8
 fi
 
 . setenv.sh
@@ -310,7 +310,7 @@ build host ppl-${PPL_VERSION-1.1}.tar.xz "--disable-shared --with-gmp=$INST_HOST
 build host cloog-${CLOOG_VERSION-0.18.3}.tar.gz "--disable-shared"
 #build host cloog-parma-0.16.1.tar.gz "--disable-shared"
 build binutils-${TARGET_BINUTILS_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
---with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror"
+--with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --program-transform-name='s&^&${TARGET_ARCH}-"
 
 # remove binutils headers and libs
 for f in ansidecl.h bfd.h bfdlink.h dis-asm.h plugin-api.h symcat.h; do
@@ -336,7 +336,7 @@ build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m
 --disable-ppl-version-check --disable-cloog-version-check --disable-isl-version-check --enable-cloog-backend=isl \
 --enable-languages=c,c++ --enable-linker-build-id --enable-threads=posix \
 --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-unique-object --enable-plugin \
---disable-sjlj-exceptions $GCC_CONFIG_FLAGS"
+--disable-sjlj-exceptions --program-transform-name='s&^&${TARGET_ARCH}-&' $GCC_CONFIG_FLAGS"
 
 # prepare crosscompiler pack
 

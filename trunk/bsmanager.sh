@@ -261,27 +261,24 @@ if test "$1" = "create"; then
 
     QEMU=""
     case $ARCH in
-    i*86)	QEMU=qemu-i386-static ;;
+    i*86)	  QEMU=qemu-i386-static ;;
     x86_64|amd64) QEMU=qemu-x86_64-static ;;
-    powerpc|ppc) QEMU=qemu-ppc-static ;;
-    mipsel)	QEMU=qemu-mipsel-static ;;
-    mips64el)	QEMU=qemu-mips64el-static ;;
-    mipsn32el)	QEMU=qemu-mipsn32el-static ;;
+    powerpc|ppc)  QEMU=qemu-ppc-static ;;
+    mipsel)	  QEMU=qemu-mipsel-static ;;
+    mips64el)	  QEMU=qemu-mips64el-static ;;
+    mipsn32el)	  QEMU=qemu-mipsn32el-static ;;
+    aarch64)	  QEMU=qemu-aarch64-static;;
+    arm*)	  QEMU=qemu-arm-static;;
     esac
 
-    if test ! "$QEMU" = ""; then
-
+    if test -f qemu/precompiled/${QEMU}-$(uname -m); then
+	echo "Installing precompiled qemu to chroot"
+	cp -f qemu/precompiled/${QEMU}-$(uname -m) ${ROOTFSDIR}/usr/bin/${QEMU}
+    else
 	echo "Installing qemu to chroot"
 	cp -f /usr/bin/${QEMU} ${ROOTFSDIR}/usr/bin/${QEMU}
-
-    else
-
-	case $ARCH in
-	arm*)    cp -f qemu/precompiled/qemu-arm-$(uname -m)     ${ROOTFSDIR}/usr/bin/qemu-arm-static ;;
-	aarch64) cp -f qemu/precompiled/qemu-aarch64-$(uname -m) ${ROOTFSDIR}/usr/bin/qemu-aarch64-static ;;
-	esac
-
     fi
+    chmod 755 ${ROOTFSDIR}/usr/bin/${QEMU}
 
     cd ${ROOTFSDIR}/tmp
     apt-get download libc6 libstdc++6 libgcc1 libtinfo5 libpcre3 libselinux1
