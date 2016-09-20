@@ -3,7 +3,7 @@
 TOPDIR=$PWD
 
 if test "$MAKE_ARGS" = ""; then
-    MAKE_ARGS=-j8
+    MAKE_ARGS=-j4
 fi
 
 . setenv.sh
@@ -334,7 +334,7 @@ build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --enable-shared --disable-bootstrap --with-system-zlib \
 --with-gmp=$INST_HOST_PREFIX --with-mpfr=$INST_HOST_PREFIX --with-mpc=$INST_HOST_PREFIX --with-cloog=$INST_HOST_PREFIX --with-isl=$INST_HOST_PREFIX --with-ppl=$INST_HOST_PREFIX \
 --disable-ppl-version-check --disable-cloog-version-check --disable-isl-version-check --enable-cloog-backend=isl \
---enable-languages=c,c++ --enable-linker-build-id --enable-threads=posix \
+--enable-languages=c,c++ --enable-linker-build-id --enable-threads=posix --enable-version-specific-runtime-libs \
 --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-unique-object --enable-plugin \
 --disable-sjlj-exceptions --program-transform-name='s&^&${TARGET_ARCH}-&' $GCC_CONFIG_FLAGS"
 
