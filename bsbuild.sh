@@ -3,7 +3,7 @@
 TOPDIR=$PWD
 
 if test "$MAKE_ARGS" = ""; then
-    MAKE_ARGS=-j4
+    MAKE_ARGS=-j8
 fi
 
 . setenv.sh
@@ -78,11 +78,21 @@ build() {
 	export LDFLAGS="-L${INST_HOST_PREFIX}/lib -L${INST_PREFIX}/lib -Wl,-rpath,${INST_PREFIX}/lib"
     fi
     
-    local nodir
-    if test "$1" = "nodir"; then
-	nodir="y"
-	shift
-    fi
+    local nodir=""
+    local noccache=""
+
+    while true; do
+	if test "$1" = "nodir"; then
+	    nodir="y"
+	    shift
+	    continue
+	elif test "$1" = "noccache"; then
+	    noccache="y"
+	    shift
+	    continue
+	fi
+	break
+    done
 
     local file="$1"
     local flags="$2"
@@ -94,6 +104,14 @@ build() {
     fi
 
     test -f build/${dir}/install.status && return
+
+    if [ "$noccache" != "y" ]; then
+	if which ccache &>/dev/null; then
+	    echo "Use ccache for build."
+	    export CC="ccache gcc"
+	    export CXX="ccache g++"
+	fi
+    fi
 
     echo "Build $dir"
 
@@ -243,7 +261,7 @@ download http://rpm.org/releases/rpm-4.4.x/rpm-4.4.2.3.tar.gz
 build host ncurses-6.0.tar.gz "--disable-shared --enable-static --disable-nls CFLAGS=\"-O2 -fPIC\" CXXFLAGS=\"-O2 -fPIC\""
 build host beecrypt-4.2.1.tar.gz "--enable-shared=no --enable-static=yes --with-python=no --with-java=no --disable-openmp --with-pic --disable-nls"
 build host popt-1.16.tar.gz "--disable-shared --enable-static --with-pic --disable-nls"
-build nodir rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls"
+build nodir noccache rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls"
 
 rm -f ${INST_PREFIX}/var/tmp
 ln -sf /var/tmp ${INST_PREFIX}/var
@@ -334,7 +352,7 @@ build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --enable-shared --disable-bootstrap --with-system-zlib \
 --with-gmp=$INST_HOST_PREFIX --with-mpfr=$INST_HOST_PREFIX --with-mpc=$INST_HOST_PREFIX --with-cloog=$INST_HOST_PREFIX --with-isl=$INST_HOST_PREFIX --with-ppl=$INST_HOST_PREFIX \
 --disable-ppl-version-check --disable-cloog-version-check --disable-isl-version-check --enable-cloog-backend=isl \
---enable-languages=c,c++ --enable-linker-build-id --enable-threads=posix --enable-version-specific-runtime-libs \
+--enable-languages=c,c++ --enable-linker-build-id --enable-threads=posix --enable-version-specific-runtime-libs --with-slibdir=${INST_PREFIX}/${TARGET_ARCH}/lib \
 --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-unique-object --enable-plugin \
 --disable-sjlj-exceptions --program-transform-name='s&^&${TARGET_ARCH}-&' $GCC_CONFIG_FLAGS"
 
