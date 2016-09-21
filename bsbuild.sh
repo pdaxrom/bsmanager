@@ -105,12 +105,15 @@ build() {
 
     test -f build/${dir}/install.status && return
 
-    if [ "$noccache" != "y" ]; then
-	if which ccache &>/dev/null; then
+    if which ccache &>/dev/null; then
+	if [ "$noccache" != "y" ]; then
 	    echo "Use ccache for build."
 	    export CC="ccache gcc"
 	    export CXX="ccache g++"
 	fi
+    else
+	export CC="gcc"
+	export CXX="g++"
     fi
 
     echo "Build $dir"
