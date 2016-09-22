@@ -1,6 +1,6 @@
-diff -Nur bzip2-1.0.6.0.1-orig/config.guess bzip2-1.0.6.0.1/config.guess
---- bzip2-1.0.6.0.1-orig/config.guess	2010-07-01 20:27:14.000000000 +0500
-+++ bzip2-1.0.6.0.1/config.guess	2016-07-06 23:05:14.425468940 +0400
+diff -Nur /Storage3/Work/bsmanager-dev/tmp/build/bzip2-1.0.6.0.1-orig/config.guess bzip2-1.0.6.0.1/config.guess
+--- /Storage3/Work/bsmanager-dev/tmp/build/bzip2-1.0.6.0.1-orig/config.guess	2010-07-01 20:27:14.000000000 +0500
++++ bzip2-1.0.6.0.1/config.guess	2016-09-22 11:47:08.084966183 +0400
 @@ -881,6 +881,9 @@
  	if test "$?" = 0 ; then LIBC="libc1" ; else LIBC="" ; fi
  	echo ${UNAME_MACHINE}-${VENDOR}-linux-gnu${LIBC}
@@ -11,3 +11,22 @@ diff -Nur bzip2-1.0.6.0.1-orig/config.guess bzip2-1.0.6.0.1/config.guess
      arm*:Linux:*:*)
  	eval $set_cc_for_build
  	if echo __ARM_EABI__ | $CC_FOR_BUILD -E - 2>/dev/null \
+diff -Nur /Storage3/Work/bsmanager-dev/tmp/build/bzip2-1.0.6.0.1-orig/config.sub bzip2-1.0.6.0.1/config.sub
+--- /Storage3/Work/bsmanager-dev/tmp/build/bzip2-1.0.6.0.1-orig/config.sub	2010-07-01 20:27:14.000000000 +0500
++++ bzip2-1.0.6.0.1/config.sub	2016-09-22 11:48:01.876432487 +0400
+@@ -245,6 +245,7 @@
+ 	# Some are omitted here because they have special meanings below.
+ 	1750a | 580 \
+ 	| a29k \
++	| aarch64 \
+ 	| alpha | alphaev[4-8] | alphaev56 | alphaev6[78] | alphapca5[67] \
+ 	| alpha64 | alpha64ev[4-8] | alpha64ev56 | alpha64ev6[78] | alpha64pca5[67] \
+ 	| am33_2.0 \
+@@ -327,6 +328,7 @@
+ 	# Recognize the basic CPU types with company name.
+ 	580-* \
+ 	| a29k-* \
++	| aarch64-* \
+ 	| alpha-* | alphaev[4-8]-* | alphaev56-* | alphaev6[78]-* \
+ 	| alpha64-* | alpha64ev[4-8]-* | alpha64ev56-* | alpha64ev6[78]-* \
+ 	| alphapca5[67]-* | alpha64pca5[67]-* | arc-* \
