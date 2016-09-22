@@ -12,10 +12,53 @@ INST_HOST_PREFIX=${TOPDIR}/tmp/hostinst
 
 mkdir -p ${INST_HOST_PREFIX}/bin
 
+if which ccache &>/dev/null; then
+    echo "Enable ccached gcc g++ wrappers."
+
+    mkdir -p ${INST_HOST_PREFIX}/xbin
+
+    cat > ${INST_HOST_PREFIX}/xbin/gcc << EOF
+#!/bin/bash
+
+exec ccache $(which gcc) \$@
+EOF
+
+    cat > ${INST_HOST_PREFIX}/xbin/cpp << EOF
+#!/bin/bash
+
+exec ccache $(which gcc) -E \$@
+EOF
+
+    cat > ${INST_HOST_PREFIX}/xbin/g++ << EOF
+#!/bin/bash
+
+exec ccache $(which g++) \$@
+EOF
+
+    cat > ${INST_HOST_PREFIX}/xbin/cxxcpp << EOF
+#!/bin/bash
+
+exec ccache $(which g++) -E \$@
+EOF
+
+    chmod 755 ${INST_HOST_PREFIX}/xbin/gcc ${INST_HOST_PREFIX}/xbin/cpp ${INST_HOST_PREFIX}/xbin/g++ ${INST_HOST_PREFIX}/xbin/cxxcpp
+
+    ln -sf gcc ${INST_HOST_PREFIX}/xbin/cc
+    ln -sf g++ ${INST_HOST_PREFIX}/xbin/c++
+
+    export CC="ccache gcc"
+    export CPP="ccache gcc -E"
+    export CXX="ccache g++"
+    export CXXCPP="ccache g++ -E"
+
+fi
+
 export PATH=${INST_HOST_PREFIX}/bin:$PATH
 export PKG_CONFIG_PATH="${INST_HOST_PREFIX}/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 TAR=tar
+
+CONFCACHEFILE=${TOPDIR}/tmp/config.cache
 
 error() {
     echo "ERROR: $@"
@@ -65,6 +108,33 @@ get_dir() {
     esac
 }
 
+copy_cache_file() {
+    if test -f $CONFCACHEFILE; then
+	rm -f config.cache
+	cp -f $CONFCACHEFILE config.cache
+    fi
+}
+
+merge_cache_file() {
+    cat config.cache $CONFCACHEFILE | \
+	grep -v "CC\|CPP\|CXX\|CXXCPP\|CFLAGS\|CPPFLAGS\|CXXFLAGS\|LDFLAGS\|LIBS" | \
+	sed -e "s|'yes'|yes|g" -e "s|'no'|no|g" | \
+	sort | \
+	uniq > config.cache.tmp
+    rm -f $CONFCACHEFILE
+    cp -f config.cache.tmp $CONFCACHEFILE
+    rm -f config.cache.tmp
+}
+
+purge_cache() {
+    if test -f $CONFCACHEFILE; then
+	cat $CONFCACHEFILE | grep -v "$1" > ${CONFCACHEFILE}.tmp
+	rm -f $CONFCACHEFILE
+	cp ${CONFCACHEFILE}.tmp $CONFCACHEFILE
+	rm -f ${CONFCACHEFILE}.tmp
+    fi
+}
+
 build() {
     local prefix=$INST_PREFIX
 
@@ -79,15 +149,15 @@ build() {
     fi
     
     local nodir=""
-    local noccache=""
+    local nocache=""
 
     while true; do
 	if test "$1" = "nodir"; then
 	    nodir="y"
 	    shift
 	    continue
-	elif test "$1" = "noccache"; then
-	    noccache="y"
+	elif test "$1" = "nocache"; then
+	    nocache="y"
 	    shift
 	    continue
 	fi
@@ -104,17 +174,6 @@ build() {
     fi
 
     test -f build/${dir}/install.status && return
-
-    if which ccache &>/dev/null; then
-	if [ "$noccache" != "y" ]; then
-	    echo "Use ccache for build."
-	    export CC="ccache gcc"
-	    export CXX="ccache g++"
-	fi
-    else
-	export CC="gcc"
-	export CXX="g++"
-    fi
 
     echo "Build $dir"
 
@@ -136,15 +195,32 @@ build() {
 	done
     fi
 
+    if [ "$nocache" != "y" ]; then
+	flags="--build=$(gcc -dumpmachine) --target=$(gcc -dumpmachine) --host=$(gcc -dumpmachine) $flags"
+	flags="--cache-file=config.cache $flags"
+    fi
+
     chmod 755 configure
 
     if test "$nodir" = ""; then
 	mkdir buildme
 	cd buildme
 
+	if [ "$nocache" != "y" ]; then
+	    copy_cache_file
+	fi
+
 	eval ../configure --prefix=$prefix $flags || error "Configure $file"
     else
+	if [ "$nocache" != "y" ]; then
+	    copy_cache_file
+	fi
+
 	eval ./configure --prefix=$prefix $flags || error "Configure $file"
+    fi
+
+    if [ "$nocache" != "y" ]; then
+	merge_cache_file
     fi
 
     make ${MAKE_ARGS} || error "make $file"
@@ -246,11 +322,18 @@ esac
 mkdir -p tmp/build
 cd tmp
 
+purge_cache "ac_cv_build"
+purge_cache "ac_cv_host"
+purge_cache "ac_cv_target"
+purge_cache "ac_cv_env_build_alias"
+purge_cache "ac_cv_env_host_alias"
+purge_cache "ac_cv_env_target_alias"
+
 download http://zlib.net/zlib-1.2.8.tar.gz
 download http://ftp.suse.com/pub/people/sbrabec/bzip2/tarballs/bzip2-1.0.6.0.1.tar.gz
 download http://tukaani.org/xz/xz-5.2.1.tar.gz
 download http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz
-build host nodir zlib-1.2.8.tar.gz "--static"
+build host nodir nocache zlib-1.2.8.tar.gz "--static"
 build bzip2-1.0.6.0.1.tar.gz "--disable-static"
 build host xz-5.2.1.tar.gz
 build host tar-1.28.tar.gz "FORCE_UNSAFE_CONFIGURE=1"
@@ -261,10 +344,13 @@ download http://downloads.sourceforge.net/project/beecrypt/beecrypt/4.2.1/beecry
 download http://rpm5.org/files/popt/popt-1.16.tar.gz
 download http://rpm.org/releases/rpm-4.4.x/rpm-4.4.2.3.tar.gz
 
-build host ncurses-6.0.tar.gz "--disable-shared --enable-static --disable-nls CFLAGS=\"-O2 -fPIC\" CXXFLAGS=\"-O2 -fPIC\""
+build host ncurses-6.0.tar.gz "--disable-shared --enable-static --disable-nls --disable-db-install --without-manpages --without-tests CFLAGS=\"-O2 -fPIC\" CXXFLAGS=\"-O2 -fPIC\""
+ln -sf ncurses/curses.h ${INST_HOST_PREFIX}/include/curses.h
+ln -sf ncurses/panel.h  ${INST_HOST_PREFIX}/include/panel.h
+
 build host beecrypt-4.2.1.tar.gz "--enable-shared=no --enable-static=yes --with-python=no --with-java=no --disable-openmp --with-pic --disable-nls"
 build host popt-1.16.tar.gz "--disable-shared --enable-static --with-pic --disable-nls"
-build nodir noccache rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls"
+build nodir nocache rpm-4.4.2.3.tar.gz "--without-python --without-apidocs --without-selinux --without-lua --disable-nls CC=${INST_HOST_PREFIX}/xbin/gcc CXX=${INST_HOST_PREFIX}/xbin/g++ CPP=${INST_HOST_PREFIX}/xbin/cpp CXXCPP=${INST_HOST_PREFIX}/xbin/cxxcpp"
 
 rm -f ${INST_PREFIX}/var/tmp
 ln -sf /var/tmp ${INST_PREFIX}/var
@@ -277,7 +363,7 @@ rm -rf ${INST_PREFIX}/include/rpm
 rm -rf ${INST_PREFIX}/include/popt.h
 
 download http://www.cpan.org/src/5.0/perl-5.22.2.tar.gz
-build nodir perl-5.22.2.tar.gz
+build nodir nocache perl-5.22.2.tar.gz
 
 find ${INST_PREFIX}/lib/perl5 -name "*.so" -exec chmod 644 {} \;  -exec strip {} \;
 
@@ -293,7 +379,7 @@ build file-5.28.tar.gz
 build make-${MAKE_VERSION-4.1}.tar.bz2 "--disable-nls"
 build pkg-config-0.28.tar.gz "--with-internal-glib --disable-nls"
 build m4-1.4.17.tar.xz "--disable-nls"
-build Python-2.7.9.tar.xz
+build nocache Python-2.7.9.tar.xz
 
 rm -rf ${INST_PREFIX}/lib/libbz2.la ${INST_PREFIX}/lib/libpython2.7.a ${INST_PREFIX}/lib/pkgconfig ${INST_PREFIX}/include/*
 
@@ -315,22 +401,20 @@ download http://www.bastoul.net/cloog/pages/download/cloog-${CLOOG_VERSION-0.18.
 download http://ftp.gnu.org/gnu/binutils/binutils-${TARGET_BINUTILS_VERSION}.tar.bz2
 download https://ftp.gnu.org/gnu/gcc/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
 
-case $(uname -m) in
-armv*)
-    build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared --build=arm" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
-    ;;
-*)
-    build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
-    ;;
-esac
-
+build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
 build host mpfr-${MPFR_VERSION-3.1.3}.tar.xz "--disable-shared"
 build host mpc-${MPC_VERSION-1.0.2}.tar.gz "--disable-shared"
 build host isl-${ISL_VERSION-0.15}.tar.xz "--disable-shared"
 build host ppl-${PPL_VERSION-1.1}.tar.xz "--disable-shared --with-gmp=$INST_HOST_PREFIX"
 build host cloog-${CLOOG_VERSION-0.18.3}.tar.gz "--disable-shared"
 #build host cloog-parma-0.16.1.tar.gz "--disable-shared"
-build binutils-${TARGET_BINUTILS_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
+
+#purge_cache "ac_cv_build"
+#purge_cache "ac_cv_host"
+purge_cache "ac_cv_target"
+purge_cache "ac_cv_env_target_alias"
+
+build binutils-${TARGET_BINUTILS_VERSION}.tar.bz2 "--target=$TARGET_ARCH \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --program-transform-name='s&^&${TARGET_ARCH}-&'"
 
 # remove binutils headers and libs
@@ -351,7 +435,7 @@ armv*)
     ;;
 esac
 
-build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH --host=$(uname -m)-linux-gnu --build=$(uname -m)-linux-gnu \
+build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --enable-shared --disable-bootstrap --with-system-zlib \
 --with-gmp=$INST_HOST_PREFIX --with-mpfr=$INST_HOST_PREFIX --with-mpc=$INST_HOST_PREFIX --with-cloog=$INST_HOST_PREFIX --with-isl=$INST_HOST_PREFIX --with-ppl=$INST_HOST_PREFIX \
 --disable-ppl-version-check --disable-cloog-version-check --disable-isl-version-check --enable-cloog-backend=isl \
