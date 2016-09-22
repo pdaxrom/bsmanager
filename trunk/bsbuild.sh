@@ -3,12 +3,14 @@
 TOPDIR=$PWD
 
 if test "$MAKE_ARGS" = ""; then
-    MAKE_ARGS=-j8
+    MAKE_ARGS=-j4
 fi
 
 . setenv.sh
 
 INST_HOST_PREFIX=${TOPDIR}/tmp/hostinst
+
+HOST_ARCH=$(gcc -dumpmachine)
 
 mkdir -p ${INST_HOST_PREFIX}/bin
 
@@ -196,7 +198,7 @@ build() {
     fi
 
     if [ "$nocache" != "y" ]; then
-	flags="--build=$(gcc -dumpmachine) --target=$(gcc -dumpmachine) --host=$(gcc -dumpmachine) $flags"
+	flags="--build=$HOST_ARCH --target=$HOST_ARCH --host=$HOST_ARCH $flags"
 	flags="--cache-file=config.cache $flags"
     fi
 
@@ -312,8 +314,8 @@ check_and_install_packages build-essential pkg-config m4
 
 fix_target_libm
 
-case $(uname -m) in
-x86_64*|aarch64*|mips64*)
+case $HOST_ARCH in
+amd64*|x86_64*|aarch64*|mips64*)
     mkdir -p ${INST_PREFIX}/lib
     test -e ${INST_PREFIX}/lib64 || ln -sf lib ${INST_PREFIX}/lib64
     ;;
@@ -426,8 +428,8 @@ for f in libbfd.a libbfd.la libopcodes.a libopcodes.la; do
 done
 #
 
-case $(uname -m) in
-armv*)
+case $HOST_ARCH in
+armv*|arm-*)
     #
     # compilation crashing if optimization enabled
     #
@@ -536,11 +538,11 @@ rm -rf ${PKG_DIR}/${INST_PREFIX}/share/man
 rm -rf ${PKG_DIR}/${INST_PREFIX}/include
 
 if test "$TAR" = "tar"; then
-    ${TAR} Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(uname -m | sed 's/_/-/').tar.xz -C ${PKG_TOOLS_DIR} .
-    ${TAR} Jcf ${TOPDIR}/buildtools_all_$(uname -m | sed 's/_/-/').tar.xz -C ${PKG_DIR} .
+    ${TAR} Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(echo ${HOST_ARCH/-*} | sed 's/_/-/').tar.xz -C ${PKG_TOOLS_DIR} .
+    ${TAR} Jcf ${TOPDIR}/buildtools_all_$(echo ${HOST_ARCH/-*} | sed 's/_/-/').tar.xz -C ${PKG_DIR} .
 else
-    ${TAR} zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(uname -m | sed 's/_/-/').tar.gz -C ${PKG_TOOLS_DIR} .
-    ${TAR} zcf ${TOPDIR}/buildtools_all_$(uname -m | sed 's/_/-/').tar.gz -C ${PKG_DIR} .
+    ${TAR} zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(echo ${HOST_ARCH/-*} | sed 's/_/-/').tar.gz -C ${PKG_TOOLS_DIR} .
+    ${TAR} zcf ${TOPDIR}/buildtools_all_$(echo ${HOST_ARCH/-*} | sed 's/_/-/').tar.gz -C ${PKG_DIR} .
 fi
 
 rm -rf ${PKG_DIR}
