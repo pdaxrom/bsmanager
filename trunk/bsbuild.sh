@@ -3,7 +3,7 @@
 TOPDIR=$PWD
 
 if test "$MAKE_ARGS" = ""; then
-    MAKE_ARGS=-j4
+    MAKE_ARGS=-j8
 fi
 
 . setenv.sh
@@ -537,12 +537,19 @@ rm -rf ${PKG_DIR}/${INST_PREFIX}/share/info
 rm -rf ${PKG_DIR}/${INST_PREFIX}/share/man
 rm -rf ${PKG_DIR}/${INST_PREFIX}/include
 
+HOST_ARCH_NAME=$(echo ${HOST_ARCH/-*} | sed 's/_/-/')
+case $HOST_ARCH in
+arm*eabihf)
+    HOST_ARCH_NAME=armhf
+    ;;
+esac
+
 if test "$TAR" = "tar"; then
-    ${TAR} Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(echo ${HOST_ARCH/-*} | sed 's/_/-/').tar.xz -C ${PKG_TOOLS_DIR} .
-    ${TAR} Jcf ${TOPDIR}/buildtools_all_$(echo ${HOST_ARCH/-*} | sed 's/_/-/').tar.xz -C ${PKG_DIR} .
+    ${TAR} Jcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_${HOST_ARCH_NAME}.tar.xz -C ${PKG_TOOLS_DIR} .
+    ${TAR} Jcf ${TOPDIR}/buildtools_all_${HOST_ARCH_NAME}.tar.xz -C ${PKG_DIR} .
 else
-    ${TAR} zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_$(echo ${HOST_ARCH/-*} | sed 's/_/-/').tar.gz -C ${PKG_TOOLS_DIR} .
-    ${TAR} zcf ${TOPDIR}/buildtools_all_$(echo ${HOST_ARCH/-*} | sed 's/_/-/').tar.gz -C ${PKG_DIR} .
+    ${TAR} zcf ${TOPDIR}/$(echo $TARGET_ARCH | sed 's/_/-/')-gcc_${TARGET_GCC_VERSION}${PACKAGE_ID}_${HOST_ARCH_NAME}.tar.gz -C ${PKG_TOOLS_DIR} .
+    ${TAR} zcf ${TOPDIR}/buildtools_all_${HOST_ARCH_NAME}.tar.gz -C ${PKG_DIR} .
 fi
 
 rm -rf ${PKG_DIR}
