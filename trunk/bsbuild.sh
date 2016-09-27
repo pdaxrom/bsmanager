@@ -6,6 +6,25 @@ if test "$MAKE_ARGS" = ""; then
     MAKE_ARGS=-j8
 fi
 
+check_and_install_packages() {
+    local packages=""
+    local p
+
+    for p in $@; do
+    if ! $(dpkg -l | grep -q $p); then
+        packages="$packages $p"
+    fi
+    done
+
+    if test ! "$packages" = ""; then
+	sudo apt-get update
+	sudo apt-get -y install $packages
+    fi
+}
+
+check_and_install_packages build-essential pkg-config m4 ccache
+#libxml-parser-perl cmake
+
 . setenv.sh
 
 INST_HOST_PREFIX=${TOPDIR}/tmp/hostinst
@@ -276,22 +295,6 @@ cmake_build() {
     popd
 }
 
-check_and_install_packages() {
-    local packages=""
-    local p
-
-    for p in $@; do
-    if ! $(dpkg -l | grep -q $p); then
-        packages="$packages $p"
-    fi
-    done
-
-    if test ! "$packages" = ""; then
-	sudo apt-get update
-	sudo apt-get -y install $packages
-    fi
-}
-
 fix_target_libm() {
     if test -d ${TARGET_SYSROOT}/usr/lib/$TARGET_ARCH ; then
 	pushd . &>/dev/null
@@ -308,9 +311,6 @@ fix_target_libm() {
 	popd &>/dev/null
     fi
 }
-
-check_and_install_packages build-essential pkg-config m4
-#libxml-parser-perl cmake
 
 fix_target_libm
 
