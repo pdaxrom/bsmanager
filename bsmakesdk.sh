@@ -20,14 +20,20 @@ PKG_DIR=/tmp/sdksysroot$$
 mkdir -p ${PKG_DIR}/${TARGET_SYSROOT}
 
 ARCH=""
+OPTLIST=""
+
 case ${TARGET_ARCH} in
 arm*)		ARCH=armhf ;;
 aarch64*)	ARCH=arm64 ;;
+x86_64*)
+    ARCH=amd64
+    OPTLIST="libc6-dev-i386 libc6-dev-x32 libc6-i386 libc6-x32"
+    ;;
 *)
     error "Not supported arch $TARGET_ARCH" ;;
 esac
 
-LIST="libc6:${ARCH} libc6-dev:${ARCH} linux-libc-dev:${ARCH}"
+LIST="libc6:${ARCH} libc6-dev:${ARCH} linux-libc-dev:${ARCH} $OPTLIST"
 #" libgcc1:${ARCH} libgcc-5-dev:${ARCH} libstdc++6:${ARCH} libstdc++-5-dev:${ARCH}"
 
 mkdir -p ${TOPDIR}/tmp/deb-${ARCH}
@@ -73,15 +79,23 @@ if test -d ${PKG_DIR}/${TARGET_SYSROOT}/usr/include/nptl; then
     rm -rf ${PKG_DIR}/${TARGET_SYSROOT}/usr/include/nptl
 fi
 
-find ${PKG_DIR}/${TARGET_SYSROOT}/usr/lib -type l | while read l; do
+DIRS=""
+
+for d in /lib /lib32 /lib64 /libx32 /usr/lib /usr/lib32 /usr/lib64 /usr/libx32; do
+    if test -d ${PKG_DIR}/${TARGET_SYSROOT}/$d; then
+	DIRS="$DIRS ${PKG_DIR}/${TARGET_SYSROOT}/$d"
+    fi
+done
+
+find $DIRS -type l | while read l; do
     case $(readlink $l) in
     /*)
 	from="$(readlink $l)"
 	ex="${PKG_DIR}/${TARGET_SYSROOT}"
-	to="$(realpath -m /${l/$ex})"
+	to="$(realpath -ms /${l/$ex})"
 	todir=$(dirname $to)
 	toname=$(basename $to)
-	new=$(realpath -m --relative-to=$todir $from)
+	new=$(realpath -ms --relative-to=$todir $from)
 	ln -sf $new $l
 	;;
     esac
