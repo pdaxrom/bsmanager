@@ -27,7 +27,7 @@ arm*)		ARCH=armhf ;;
 aarch64*)	ARCH=arm64 ;;
 x86_64*)
     ARCH=amd64
-    OPTLIST="libc6-dev-i386 libc6-dev-x32 libc6-i386 libc6-x32"
+    OPTLIST="libc6-dev-i386 libc6-dev-x32 libc6-i386 libc6-x32 gcc-multilib"
     ;;
 *)
     error "Not supported arch $TARGET_ARCH" ;;
