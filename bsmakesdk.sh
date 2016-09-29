@@ -36,20 +36,30 @@ esac
 LIST="libc6:${ARCH} libc6-dev:${ARCH} linux-libc-dev:${ARCH} $OPTLIST"
 #" libgcc1:${ARCH} libgcc-5-dev:${ARCH} libstdc++6:${ARCH} libstdc++-5-dev:${ARCH}"
 
-mkdir -p ${TOPDIR}/tmp/deb-${ARCH}
+if [ $# -eq 0 ]; then
 
-cd ${TOPDIR}/tmp/deb-${ARCH}
+    mkdir -p ${TOPDIR}/tmp/deb-${ARCH}
 
-dpkg-architecture -i $ARCH || dpkg --add-architecture $ARCH
+    cd ${TOPDIR}/tmp/deb-${ARCH}
 
-apt-get update
-apt-get download $LIST
+    dpkg-architecture -i $ARCH || dpkg --add-architecture $ARCH
 
-dpkg-architecture -i $ARCH || dpkg --remove-architecture $ARCH
+    apt-get update
+    apt-get download $LIST
 
-for p in *.deb; do
-    dpkg-deb -x $p ${PKG_DIR}/${TARGET_SYSROOT}
-done
+    dpkg-architecture -i $ARCH || dpkg --remove-architecture $ARCH
+
+    for p in *.deb; do
+	dpkg-deb -x $p ${PKG_DIR}/${TARGET_SYSROOT}
+    done
+
+else
+
+    for p in $@; do
+	dpkg-deb -x $p ${PKG_DIR}/${TARGET_SYSROOT}
+    done
+
+fi
 
 #case $TARGET_ARCH in
 #x86_64*|aarch64*)
