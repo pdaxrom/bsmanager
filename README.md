@@ -1,13 +1,11 @@
-# bsmanager
-
-Build Server Manager
+# Build Server Manager
 
 Chroot qemu environment for easy development and native crosscompilers.
+
 
 To enable connection only from specific IP:
 
 iptables -A INPUT -p tcp --dport 41432 -s 37.252.126.129 -j ACCEPT
-
 iptables -A INPUT -p tcp --dport 41432 -j DROP
 
 
