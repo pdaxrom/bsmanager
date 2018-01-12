@@ -7590,3 +7590,14 @@ diff -Nur ccache-3.2.5-orig/configure ccache-3.2.5/configure
 +
 +{ $as_echo "$as_me:${as_lineno-$LINENO}: now build ccache by running make" >&5
 +$as_echo "$as_me: now build ccache by running make" >&6;}
+diff -Nur ccache-3.2.5-orig/dev.mk.in ccache-3.2.5/dev.mk.in
+--- ccache-3.2.5-orig/dev.mk.in	2016-04-17 07:44:05.000000000 -0700
++++ ccache-3.2.5/dev.mk.in	2018-01-12 02:43:15.208027403 -0800
+@@ -1,6 +1,6 @@
+ # GNU make syntax reigns in this file.
+ 
+-all_cflags += -Werror
++#all_cflags += -Werror
+ all_cppflags += -MD -MP -MF .deps/$(subst .._,,$(subst /,_,$<)).d
+ 
+ ASCIIDOC = asciidoc

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INST_PREFIX="/opt/madisa/toolchain"
+INST_PREFIX="/opt/buildserver/toolchain"
 
 export LD_LIBRARY_PATH="${INST_PREFIX}/lib"
 export PKG_CONFIG_PATH="${INST_PREFIX}/lib/pkgconfig"

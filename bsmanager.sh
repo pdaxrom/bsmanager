@@ -194,7 +194,7 @@ if test "$1" = "create"; then
     ROOTFSFILE="$3"
     USERNAME="$2"
     GROUPNAME="${2}users"
-    ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
+    ROOTFSDIR="/opt/buildserver/rootfs/${USERNAME}"
 
     if test ! "$ARCH" = ""; then
 	if test $(check_valid_architecture "$ARCH") = "0"; then
@@ -302,7 +302,7 @@ if test "$1" = "create"; then
 
     ln -sf ${ROOTFSDIR}/home/$USERNAME /home/$USERNAME
 
-    for dir in $(cat /etc/fstab | awk '/^devpts \/opt\/madisa\/rootfs\//{ print $2; }'); do
+    for dir in $(cat /etc/fstab | awk '/^devpts \/opt\/buildserver\/rootfs\//{ print $2; }'); do
 	mountpoint -q $dir && umount $dir
     done
 
@@ -343,7 +343,7 @@ elif test "$1" = "remove"; then
 
     USERNAME="$2"
     GROUPNAME="${2}users"
-    ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
+    ROOTFSDIR="/opt/buildserver/rootfs/${USERNAME}"
 
     if ! id $USERNAME &>/dev/null ; then
 	echo "User '$USERNAME' does not exists!"
@@ -365,7 +365,7 @@ elif test "$1" = "remove"; then
     done
     rm -f /tmp/fstab.new.$$
 
-    for dir in $(cat /etc/fstab | awk '/^devpts \/opt\/madisa\/rootfs\//{ print $2; }'); do
+    for dir in $(cat /etc/fstab | awk '/^devpts \/opt\/buildserver\/rootfs\//{ print $2; }'); do
 	mountpoint -q $dir || mount $dir
     done
 
@@ -415,19 +415,19 @@ elif test "$1" = "enable"; then
     elif test "$2" = "native"; then
 	USERNAME="$3"
 	GROUPNAME="${3}users"
-	ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
+	ROOTFSDIR="/opt/buildserver/rootfs/${USERNAME}"
 
 	if ! id $USERNAME &>/dev/null ; then
 	    echo "User '$USERNAME' does not exists!"
 	    exit 1
 	fi
 
-	mkdir -p ${ROOTFSDIR}/opt/madisa/backup
+	mkdir -p ${ROOTFSDIR}/opt/buildserver/backup
 	for f in /bin/bash /bin/dash /bin/sed /bin/grep /bin/sleep; do
-	    if test -x ${ROOTFSDIR}$f -a -x $f -a ! -e ${ROOTFSDIR}/opt/madisa/backup/$f ; then
+	    if test -x ${ROOTFSDIR}$f -a -x $f -a ! -e ${ROOTFSDIR}/opt/buildserver/backup/$f ; then
 		echo "Installing $f"
-		mkdir -p $(dirname ${ROOTFSDIR}/opt/madisa/backup/$f)
-		cp ${ROOTFSDIR}$f $(dirname ${ROOTFSDIR}/opt/madisa/backup/$f)
+		mkdir -p $(dirname ${ROOTFSDIR}/opt/buildserver/backup/$f)
+		cp ${ROOTFSDIR}$f $(dirname ${ROOTFSDIR}/opt/buildserver/backup/$f)
 		rm -f ${ROOTFSDIR}$f
 		cp $f $(dirname ${ROOTFSDIR}$f)
 	    fi
@@ -443,7 +443,7 @@ elif test "$1" = "disable"; then
     elif test "$2" = "native"; then
 	USERNAME="$3"
 	GROUPNAME="${3}users"
-	ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
+	ROOTFSDIR="/opt/buildserver/rootfs/${USERNAME}"
 
 	if ! id $USERNAME &>/dev/null ; then
 	    echo "User '$USERNAME' does not exists!"
@@ -451,11 +451,11 @@ elif test "$1" = "disable"; then
 	fi
 
 	for f in /bin/bash /bin/dash /bin/sed /bin/grep /bin/sleep; do
-	    if test -x ${ROOTFSDIR}$f -a -x ${ROOTFSDIR}/opt/madisa/backup/$f ; then
+	    if test -x ${ROOTFSDIR}$f -a -x ${ROOTFSDIR}/opt/buildserver/backup/$f ; then
 		echo "Uninstalling $f"
 		rm -f ${ROOTFSDIR}$f
-		cp ${ROOTFSDIR}/opt/madisa/backup/$f $(dirname ${ROOTFSDIR}$f)
-		rm -f ${ROOTFSDIR}/opt/madisa/backup/$f
+		cp ${ROOTFSDIR}/opt/buildserver/backup/$f $(dirname ${ROOTFSDIR}$f)
+		rm -f ${ROOTFSDIR}/opt/buildserver/backup/$f
 	    fi
 	done
     fi
@@ -463,18 +463,18 @@ elif test "$1" = "disable"; then
 elif test "$1" = "shell"; then
     USERNAME="$2"
     GROUPNAME="${2}users"
-    ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
+    ROOTFSDIR="/opt/buildserver/rootfs/${USERNAME}"
 
     chroot $ROOTFSDIR
 
 elif test "$1" = "list"; then
 
-    ls /opt/madisa/rootfs
+    ls /opt/buildserver/rootfs
 
 elif test "$1" = "toolchain"; then
     USERNAME="$2"
     GROUPNAME="${2}users"
-    ROOTFSDIR="/opt/madisa/rootfs/${USERNAME}"
+    ROOTFSDIR="/opt/buildserver/rootfs/${USERNAME}"
     TOOLSFILE="$3"
     SYSROOTFILE="$4"
 
@@ -512,19 +512,19 @@ elif test "$1" = "toolchain"; then
     esac
     fi
 
-    if test -d "${ROOTFSDIR}/opt/madisa/toolchain/${TARGET_ARCH}/bin"; then
+    if test -d "${ROOTFSDIR}/opt/buildserver/toolchain/${TARGET_ARCH}/bin"; then
 
 	SYSROOT_SETUP=${TARGET_ARCH}-sysroot-path
 
-	if test -x "${ROOTFSDIR}/opt/madisa/toolchain/bin/${SYSROOT_SETUP}"; then
+	if test -x "${ROOTFSDIR}/opt/buildserver/toolchain/bin/${SYSROOT_SETUP}"; then
 
-	    chroot ${ROOTFSDIR} /opt/madisa/toolchain/bin/${SYSROOT_SETUP} --install
+	    chroot ${ROOTFSDIR} /opt/buildserver/toolchain/bin/${SYSROOT_SETUP} --install
 
 	fi
 
-	ln -s /opt/madisa/toolchain/bin/${TARGET_ARCH}-setenv ${ROOTFSDIR}/home/${USERNAME}/
+	ln -s /opt/buildserver/toolchain/bin/${TARGET_ARCH}-setenv ${ROOTFSDIR}/home/${USERNAME}/
 
-	cd ${ROOTFSDIR}/opt/madisa/toolchain/bin
+	cd ${ROOTFSDIR}/opt/buildserver/toolchain/bin
 
 	for f in ${TARGET_ARCH}-*; do
 

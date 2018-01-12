@@ -216,6 +216,12 @@ build() {
 	done
     fi
 
+    if test -d ${TOPDIR}/hooks/$dir; then
+	for f in ${TOPDIR}/hooks/$dir/*; do
+	    bash $f || error "execute hook"
+	done
+    fi
+
     if [ "$nocache" != "y" ]; then
 	flags="--build=$HOST_ARCH --target=$HOST_ARCH --host=$HOST_ARCH $flags"
 	flags="--cache-file=config.cache $flags"
@@ -393,22 +399,23 @@ find ${INST_PREFIX}/lib/python2.7 -name "*.so" -exec strip {} \;
 
 strip ${INST_PREFIX}/lib/rpm/* &>/dev/null
 
-download https://gmplib.org/download/gmp/gmp-${GMP_VERSION-6.0.0a}.tar.xz
-download http://ftp.gnu.org/gnu/mpfr/mpfr-${MPFR_VERSION-3.1.3}.tar.xz
-download ftp://ftp.gnu.org/gnu/mpc/mpc-${MPC_VERSION-1.0.2}.tar.gz
-download http://isl.gforge.inria.fr/isl-${ISL_VERSION-0.15}.tar.xz
-download http://bugseng.com/products/ppl/download/ftp/releases/1.1/ppl-${PPL_VERSION-1.1}.tar.xz
-download http://www.bastoul.net/cloog/pages/download/cloog-${CLOOG_VERSION-0.18.3}.tar.gz
+#download https://gmplib.org/download/gmp/gmp-${GMP_VERSION-6.0.0a}.tar.xz
+#download http://ftp.gnu.org/gnu/mpfr/mpfr-${MPFR_VERSION-3.1.3}.tar.xz
+#download ftp://ftp.gnu.org/gnu/mpc/mpc-${MPC_VERSION-1.0.2}.tar.gz
+#download http://isl.gforge.inria.fr/isl-${ISL_VERSION-0.15}.tar.xz
+#download http://bugseng.com/products/ppl/download/ftp/releases/1.1/ppl-${PPL_VERSION-1.1}.tar.xz
+#download http://www.bastoul.net/cloog/pages/download/cloog-${CLOOG_VERSION-0.18.3}.tar.gz
 #download http://www.bastoul.net/cloog/pages/download/cloog-parma-0.16.1.tar.gz
+
 download http://ftp.gnu.org/gnu/binutils/binutils-${TARGET_BINUTILS_VERSION}.tar.bz2
 download https://ftp.gnu.org/gnu/gcc/gcc-${TARGET_GCC_VERSION}/gcc-${TARGET_GCC_VERSION}.tar.bz2
 
-build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
-build host mpfr-${MPFR_VERSION-3.1.3}.tar.xz "--disable-shared"
-build host mpc-${MPC_VERSION-1.0.2}.tar.gz "--disable-shared"
-build host isl-${ISL_VERSION-0.15}.tar.xz "--disable-shared"
-build host ppl-${PPL_VERSION-1.1}.tar.xz "--disable-shared --with-gmp=$INST_HOST_PREFIX"
-build host cloog-${CLOOG_VERSION-0.18.3}.tar.gz "--disable-shared"
+#build host gmp-${GMP_VERSION-6.0.0a}.tar.xz "--enable-cxx --disable-shared" "" ${GMP_SOURCE_DIR-gmp-6.0.0}
+#build host mpfr-${MPFR_VERSION-3.1.3}.tar.xz "--disable-shared"
+#build host mpc-${MPC_VERSION-1.0.2}.tar.gz "--disable-shared"
+#build host isl-${ISL_VERSION-0.15}.tar.xz "--disable-shared"
+#build host ppl-${PPL_VERSION-1.1}.tar.xz "--disable-shared --with-gmp=$INST_HOST_PREFIX"
+#build host cloog-${CLOOG_VERSION-0.18.3}.tar.gz "--disable-shared"
 #build host cloog-parma-0.16.1.tar.gz "--disable-shared"
 
 #purge_cache "ac_cv_build"
@@ -439,8 +446,6 @@ esac
 
 build gcc-${TARGET_GCC_VERSION}.tar.bz2 "--target=$TARGET_ARCH \
 --with-sysroot=$TARGET_SYSROOT --disable-nls --disable-werror --enable-shared --disable-bootstrap --with-system-zlib \
---with-gmp=$INST_HOST_PREFIX --with-mpfr=$INST_HOST_PREFIX --with-mpc=$INST_HOST_PREFIX --with-cloog=$INST_HOST_PREFIX --with-isl=$INST_HOST_PREFIX --with-ppl=$INST_HOST_PREFIX \
---disable-ppl-version-check --disable-cloog-version-check --disable-isl-version-check --enable-cloog-backend=isl \
 --enable-languages=c,c++ --enable-linker-build-id --enable-threads=posix --enable-version-specific-runtime-libs --with-slibdir=${INST_PREFIX}/${TARGET_ARCH}/lib \
 --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-unique-object --enable-plugin \
 --disable-sjlj-exceptions --program-transform-name='s&^&${TARGET_ARCH}-&' $GCC_CONFIG_FLAGS"
